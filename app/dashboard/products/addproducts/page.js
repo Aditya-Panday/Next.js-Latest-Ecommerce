@@ -1,7 +1,12 @@
+import ProductTable from "@/components/AdminLayout/ProductSections/ProductTable";
 import React from "react";
 
 const page = () => {
-  return <div>Add Products</div>;
+  return (
+    <>
+      <ProductTable />
+    </>
+  );
 };
 
 export default page;

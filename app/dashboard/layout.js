@@ -23,8 +23,9 @@ const Layout = ({ children }) => {
           <h1 className="text-xl font-mono">
             Welcome <span className=" text-orange-500">Aditya Panday</span>
           </h1>
+
           <div>
-            <button className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-50">
+            <button className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg  hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-50">
               <LogOut />
               Logout
             </button>

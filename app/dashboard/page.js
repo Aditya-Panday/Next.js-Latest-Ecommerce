@@ -7,7 +7,7 @@ const Page = () => {
       {/* Stats Section */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Card 1 */}
-        <div className="rounded-lg shadow bg-white p-4">
+        <div className="rounded-lg  bg-white p-4">
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Total Users</h2>
             <p className="text-sm text-gray-500">Number of registered users</p>
@@ -18,7 +18,7 @@ const Page = () => {
         </div>
 
         {/* Card 2 */}
-        <div className="rounded-lg shadow bg-white p-4">
+        <div className="rounded-lg  bg-white p-4">
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Active Users</h2>
             <p className="text-sm text-gray-500">
@@ -31,7 +31,7 @@ const Page = () => {
         </div>
 
         {/* Card 3 */}
-        <div className="rounded-lg shadow bg-white p-4">
+        <div className="rounded-lg  bg-white p-4">
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Revenue</h2>
             <p className="text-sm text-gray-500">Total revenue this month</p>
@@ -42,7 +42,7 @@ const Page = () => {
         </div>
 
         {/* Card 4 */}
-        <div className="rounded-lg shadow bg-white p-4">
+        <div className="rounded-lg  bg-white p-4">
           <div className="mb-4">
             <h2 className="text-lg font-semibold">Growth</h2>
             <p className="text-sm text-gray-500">
@@ -56,7 +56,7 @@ const Page = () => {
       </div>
 
       {/* Data Analysis Section */}
-      <div className="rounded-lg shadow bg-white p-6">
+      <div className="rounded-lg bg-white p-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Data Analysis</h2>
           <p className="text-sm text-gray-500">

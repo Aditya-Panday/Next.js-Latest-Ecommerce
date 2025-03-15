@@ -43,7 +43,9 @@ export async function POST(req) {
 
 export async function DELETE(req) {
   try {
-    const { id } = await req.json();
+    const { searchParams } = new URL(req.url);
+
+    let id = parseInt(searchParams.get("id")) || "";
 
     // Validate required fields
     if (!id) {
@@ -68,6 +70,89 @@ export async function DELETE(req) {
     return NextResponse.json({
       status: 200,
       message: "Brand deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return NextResponse.json(
+      { message: "An internal server error occurred" },
+      { status: 500 }
+    );
+  }
+}
+
+// export async function GET(req) {
+//   try {
+//     const { searchParams } = new URL(req.url);
+//     let page = parseInt(searchParams.get("page")) || 1;
+//     let limit = parseInt(searchParams.get("limit")) || 10;
+//     let offset = (page - 1) * limit;
+
+//     const getBrands = `SELECT * FROM brands LIMIT ? OFFSET ?`;
+//     const [brands] = await db.query(getBrands, [limit, offset]);
+
+//     const countQuery = `SELECT COUNT(*) AS total FROM brands`;
+//     const [countResult] = await db.query(countQuery);
+//     const total = countResult[0].total;
+
+//     return NextResponse.json({
+//       status: true,
+//       data: brands,
+//       total,
+//       page,
+//       totalPages: Math.ceil(total / limit),
+//     });
+//   } catch (error) {
+//     console.error("Error:", error);
+//     return NextResponse.json(
+//       { message: "An internal server error occurred" },
+//       { status: 500 }
+//     );
+//   }
+// }
+export async function GET(req) {
+  try {
+    const { searchParams } = new URL(req.url);
+
+    let page = parseInt(searchParams.get("page")) || 1;
+    let limit = parseInt(searchParams.get("limit")) || 10;
+    let offset = (page - 1) * limit;
+
+    let status = searchParams.get("status");
+    let search = searchParams.get("search");
+
+    let whereClause = [];
+    let values = [];
+
+    if (status !== null && (status === "0" || status === "1")) {
+      whereClause.push("status = ?");
+      values.push(parseInt(status));
+    }
+
+    if (search) {
+      whereClause.push("name LIKE ?");
+      values.push(`%${search}%`);
+    }
+
+    let whereSQL = whereClause.length
+      ? `WHERE ${whereClause.join(" AND ")}`
+      : "";
+
+    const getBrands = `SELECT * FROM brands ${whereSQL} LIMIT ? OFFSET ?`;
+    values.push(limit, offset);
+    console.log("bd", getBrands);
+    const [brands] = await db.query(getBrands, values);
+
+    const countQuery = `SELECT COUNT(*) AS total FROM brands ${whereSQL}`;
+    const [countResult] = await db.query(countQuery, values.slice(0, -2)); // Last 2 params limit/offset hata rahe hain
+
+    const total = countResult[0]?.total || 0;
+
+    return NextResponse.json({
+      status: true,
+      data: brands,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     console.error("Error:", error);

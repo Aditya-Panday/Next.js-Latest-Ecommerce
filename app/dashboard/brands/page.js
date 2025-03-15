@@ -1,29 +1,26 @@
 "use client";
 import { useState } from "react";
 import Brands from "@/components/AdminLayout/Brands/Brands";
+import { useGetBrandsQuery } from "@/lib/features/adminApi/brandSlice";
+import Loader from "@/components/Loader";
 
-// Mock data for brands
-const brands = [
-  { id: 1, name: "Nike", category: "17/08/2002", founded: 1964 },
-  { id: 2, name: "Armani", category: "17/08/2002", founded: 1976 },
-  { id: 3, name: "Roadster", category: "17/08/2002", founded: 1886 },
-  { id: 4, name: "Louis Vuitton", category: "17/08/2002", founded: 1994 },
-  { id: 5, name: "Zara", category: "17/08/2002", founded: 1937 },
-  // Add more brands as needed
-];
 const Page = () => {
-  const [itemsPerPage, setItemsPerPage] = useState(5); // State to manage the value
+  const [filters, setFilters] = useState({
+    page: 1,
+    limit: 5,
+    search: "",
+    status: null,
+  });
 
-  const handleItemsPerPageChange = (e) => {
-    setItemsPerPage(e.target.value); // Update the state when the select value changes
-  };
+  const { data, isLoading } = useGetBrandsQuery(filters);
+
   return (
     <>
-      <Brands
-        brands={brands}
-        itemsPerPage={itemsPerPage}
-        handleItemsPerPageChange={handleItemsPerPageChange}
-      />
+      {isLoading ? (
+        <Loader />
+      ) : (
+        <Brands data={data} filters={filters} setFilters={setFilters} />
+      )}
     </>
   );
 };

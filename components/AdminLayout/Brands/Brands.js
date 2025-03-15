@@ -1,126 +1,196 @@
-"use client";
-import React from "react";
+'use client'
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Search, Trash2 } from "lucide-react";
+import { useDeleteBrandMutation } from "@/lib/features/adminApi/brandSlice";
 
-import { Plus, Trash, Pencil } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  decrement,
-  increment,
-  incrementByAmount,
-} from "@/lib/features/counter/counter";
+const Brands = ({ data, filters, setFilters }) => {
+  const [brandModal, setBrandModal] = useState(false);
 
-const Brands = ({ brands, itemsPerPage, handleItemsPerPageChange }) => {
-  const count = useSelector((state) => state.counter.value);
-  const dispatch = useDispatch();
+  const [deleteBrand, { isLoading }] = useDeleteBrandMutation(); // Use delete mutation
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this brand?"
+    );
+    if (confirmDelete) {
+      try {
+        const res = await deleteBrand(id);
+        if (res.data.status === 200) {
+          alert("Brand deleted successfully");
+        }
+      } catch (error) {
+        console.error("Error deleting brand:", error);
+        alert("Failed to delete brand");
+      }
+    }
+  };
+
   return (
-    <>
-      <h1>Counter: {count}</h1>
-      <div className="flex">
-        <button
-          className="bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 px-4 py-2 rounded-md my-3 mx-2"
-          onClick={() => dispatch(increment())}
-        >
-          <span>Increment</span>
-        </button>
-        <button
-          className="bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 px-4 py-2 rounded-md my-3"
-          onClick={() => dispatch(decrement())}
-        >
-          <span>Decrement</span>
-        </button>
-
-        <button
-          className="bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 px-4 py-2 rounded-md  my-3 mx-2"
-          onClick={() => dispatch(incrementByAmount(5))}
-        >
-          <span>Increment by 5</span>
-        </button>
-      </div>
-
-      <h1 className="text-3xl font-bold mb-10 text-gray-800 ml-8">
-        Brand Management
-      </h1>
-      <div className="container mx-auto ">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-            <label
-              htmlFor="itemsPerPage"
-              className="text-sm font-medium text-gray-700"
-            >
-              Items per page:
-            </label>
-            <div className="relative w-[100px]">
-              <select
-                id="itemsPerPage"
-                value={itemsPerPage}
-                onChange={handleItemsPerPageChange} // Added onChange handler
-                className="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring focus:ring-blue-200"
-              >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-            </div>
+    <div className="container mx-auto p-4">
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold mb-4">Brands Section</h1>
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+          <div className="relative mb-4 md:mb-0">
+            <input
+              className="border border-gray-300 rounded-lg pl-10 pr-4 py-2 w-full md:w-64"
+              placeholder="Search by brand name..."
+              value={filters.search}
+              onChange={(e) =>
+                setFilters({ ...filters, search: e.target.value })
+              }
+              type="text"
+            />
+            <Search
+              size={18}
+              className="fas fa-search absolute left-3 top-3 text-gray-400"
+            />
           </div>
+          <div className="flex">
+            <label htmlFor="status-filter" className="sr-only">
+              Select Status
+            </label>
+            <select
+              className="border border-gray-300 rounded-lg py-2 px-4 mx-2"
+              value={filters.status ?? ""} // Handle null case
+              onChange={(e) =>
+                setFilters({ ...filters, status: e.target.value })
+              }
+            >
+              <option value="">Status</option>
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
 
-          <button className="bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 px-4 py-2 rounded-md">
-            <Plus className="h-4 w-4" />
-            <span>Add Brand</span>
-          </button>
+            <Button className="w-full" onClick={() => setBrandModal(true)}>
+              Add Brand
+            </Button>
+          </div>
         </div>
-
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full table-auto">
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
             <thead>
-              <tr className="bg-slate-950 text-slate-200">
-                <th className="py-3 px-4 text-left text-sm font-semibold">
-                  ID
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold">
-                  Name
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold">
-                  Created Date
-                </th>
-                <th className="py-3 px-4 text-right text-sm font-semibold">
-                  Action
-                </th>
+              <tr>
+                <th className="py-2 px-4 border-b text-left">ID</th>
+                <th className="py-2 px-4 border-b text-left">Name</th>
+                <th className="py-2 px-4 border-b text-left">STATUS</th>
+                <th className="py-2 px-4 border-b text-left">DATE</th>
+                <th className="py-2 px-4 border-b text-left">ACTION</th>
               </tr>
             </thead>
             <tbody>
-              {brands.map((brand) => (
-                <tr key={brand.id} className="border-t border-gray-200">
-                  <td className="py-3 px-4 text-sm font-medium">{brand.id}</td>
-                  <td className="py-3 px-4 text-sm">{brand.name}</td>
-                  <td className="py-3 px-4 text-sm">{brand.category}</td>
-                  <td className="py-3 px-4 text-sm text-right">
-                    <button className="bg-red-500 hover:bg-red-600 text-white  space-x-2 px-4 py-2 rounded-md mx-2">
-                      <Trash className="h-4 w-4" />
-                    </button>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white  space-x-2 px-4 py-2 rounded-md mx-2">
-                      <Pencil className="h-4 w-4" />
-                    </button>
+              {data?.data?.map((brand) => (
+                <tr key={brand.id}>
+                  <td className="py-2 px-4 border-b">#{brand.id}</td>
+                  <td className="py-2 px-4 border-b">{brand.name}</td>
+                  <td className="py-2 px-4 border-b">
+                    <span
+                      className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                        brand.status === 1
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-500 text-white"
+                      }`}
+                    >
+                      {brand.status === 1 ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    {new Date(brand.created_date).toLocaleDateString()}
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    <div
+                      className="flex items-center justify-center w-10 h-10 rounded-sm transition-all duration-100 cursor-pointer hover:bg-red-100 hover:border hover:border-red-500"
+                      disabled={isLoading} // Disable button while deleting
+                    >
+                      <Trash2
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleDelete(brand.id)}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-
-        <div className="flex justify-center mt-4">
-          <nav className="inline-flex rounded-md shadow">
-            <button className="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              Previous
+        <div className="flex flex-col md:flex-row justify-between items-center mt-4">
+          <div className="text-gray-500 mb-4 md:mb-0">
+            Showing 10 items of 120
+          </div>
+          <div className="flex items-center space-x-1">
+            <button className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+              &lt;
             </button>
-
-            <button className="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              Next
+            <button className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+              1
             </button>
-          </nav>
+            <button className="bg-blue-500 text-white px-3 py-1 rounded-full">
+              3
+            </button>
+            <button className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+              4
+            </button>
+            <button className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+              &gt;
+            </button>
+          </div>
         </div>
       </div>
-    </>
+      <div
+        className={`fixed z-10 inset-0 overflow-y-auto ${
+          brandModal == true ? "" : "hidden"
+        }`}
+        id="modal"
+      >
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div className="absolute inset-0 bg-slate-700 opacity-75"></div>
+          </div>
+          <div className="bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:max-w-lg sm:w-full">
+            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+              <div className="sm:flex sm:items-start">
+                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3
+                    className="text-lg leading-6 font-medium text-gray-900 "
+                    id="modal-title"
+                  >
+                    Add Product
+                  </h3>
+                  <hr className="my-4" />
+                  <div className="mt-2">
+                    <input
+                      className="border border-gray-300 rounded-lg w-full py-2 px-4 mb-4"
+                      placeholder="Product Name"
+                      type="text"
+                    />
+
+                    <input
+                      className="border border-gray-300 rounded-lg w-full py-2 px-4 mb-4"
+                      placeholder="Price"
+                      type="text"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+              <button
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-500 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={() => setBrandModal(false)}
+              >
+                Save
+              </button>
+              <button
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                onClick={() => setBrandModal(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
