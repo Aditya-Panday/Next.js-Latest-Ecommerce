@@ -1,78 +1,143 @@
-import React from "react";
-import { Plus, Trash } from "lucide-react";
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Search, Trash2 } from "lucide-react";
+import AddBrand from "../AdminModals/AddBrand";
+import { useDeleteSubcategoryMutation } from "@/lib/features/adminApi/subcategorySlice";
+import AddSubcategory from "../AdminModals/AddSubcategory";
 
-const Subcategories = ({ brands, itemsPerPage, handleItemsPerPageChange }) => {
+const Subcategories = ({ data, filters, setFilters }) => {
+  const [subModal, setSubModal] = useState(false);
+  const [deleteSub, { isLoading }] = useDeleteSubcategoryMutation();
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this subcategory?"
+    );
+    if (confirmDelete) {
+      try {
+        const res = await deleteSub(id);
+        if (res.data.status === 200) {
+          alert("Subcategory deleted successfully");
+        }
+      } catch (error) {
+        console.error("Error deleting subcategory:", error);
+        alert("Failed to delete subcategory");
+      }
+    }
+  };
+
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-10 text-gray-800 ml-8">
-        Subcategories
-      </h1>
-      <div className="container mx-auto ">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-            <label
-              htmlFor="itemsPerPage"
-              className="text-sm font-medium text-gray-700"
-            >
-              Items per page:
-            </label>
-            <div className="relative w-[100px]">
-              <select
-                id="itemsPerPage"
-                value={itemsPerPage}
-                onChange={handleItemsPerPageChange} // Added onChange handler
-                className="block w-full rounded-md border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring focus:ring-blue-200"
-              >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-            </div>
+    <div className="container mx-auto p-4">
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold mb-4">Subcategories Section</h1>
+        <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+          <div className="relative mb-4 md:mb-0">
+            <input
+              className="border border-gray-300 rounded-lg pl-10 pr-4 py-2 w-full md:w-64"
+              placeholder="Search by name..."
+              value={filters.search}
+              onChange={(e) =>
+                setFilters({ ...filters, search: e.target.value })
+              }
+              type="text"
+            />
+            <Search
+              size={18}
+              className="fas fa-search absolute left-3 top-3 text-gray-400"
+            />
           </div>
+          <div className="flex">
+            <label htmlFor="status-filter" className="sr-only">
+              Select Status
+            </label>
+            <select
+              className="border border-gray-300 rounded-lg py-2 px-4 mx-2"
+              value={filters.status ?? ""}
+              onChange={(e) =>
+                setFilters({ ...filters, status: e.target.value })
+              }
+            >
+              <option value="">Status</option>
+              <option value="1">Active</option>
+              <option value="0">Inactive</option>
+            </select>
 
-          <button className="bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 px-4 py-2 rounded-md">
-            <Plus className="h-4 w-4" />
-            <span>Add category</span>
-          </button>
+            <Button className="w-full" onClick={() => setSubModal(true)}>
+              Add Subcategory
+            </Button>
+          </div>
         </div>
-
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full table-auto">
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
             <thead>
-              <tr className="bg-slate-950 text-slate-200">
-                <th className="py-3 px-4 text-left text-sm font-semibold">
-                  ID
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold">
-                  Name
-                </th>
-                <th className="py-3 px-4 text-left text-sm font-semibold">
-                  Created Date
-                </th>
-                <th className="py-3 px-4 text-right text-sm font-semibold">
-                  Action
-                </th>
+              <tr>
+                <th className="py-2 px-4 border-b text-left">ID</th>
+                <th className="py-2 px-4 border-b text-left">Name</th>
+                <th className="py-2 px-4 border-b text-left">STATUS</th>
+                <th className="py-2 px-4 border-b text-left">DATE</th>
+                <th className="py-2 px-4 border-b text-left">ACTION</th>
               </tr>
             </thead>
             <tbody>
-              {brands.map((brand) => (
-                <tr key={brand.id} className="border-t border-gray-200">
-                  <td className="py-3 px-4 text-sm font-medium">{brand.id}</td>
-                  <td className="py-3 px-4 text-sm">{brand.name}</td>
-                  <td className="py-3 px-4 text-sm">{brand.category}</td>
-                  <td className="py-3 px-4 text-sm text-right">
-                    <button className="bg-red-500 hover:bg-red-600 text-white  space-x-2 px-4 py-2 rounded-md">
-                      <Trash className="h-4 w-4" />
-                    </button>
+              {data?.data?.map((sub) => (
+                <tr key={sub.id}>
+                  <td className="py-2 px-4 border-b">#{sub.id}</td>
+                  <td className="py-2 px-4 border-b">{sub.name}</td>
+                  <td className="py-2 px-4 border-b">
+                    <span
+                      className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                        sub.status === 1
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-500 text-white"
+                      }`}
+                    >
+                      {sub.status === 1 ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    {new Date(sub.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="py-2 px-4 border-b">
+                    <div
+                      className="flex items-center justify-center w-10 h-10 rounded-sm transition-all duration-100 cursor-pointer hover:bg-red-100 hover:border hover:border-red-500"
+                      disabled={isLoading}
+                    >
+                      <Trash2
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleDelete(sub.id)}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <div className="flex flex-col md:flex-row justify-between items-center mt-4">
+          <div className="text-gray-500 mb-4 md:mb-0">
+            Showing 10 items of 120
+          </div>
+          <div className="flex items-center space-x-1">
+            <button className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+              &lt;
+            </button>
+            <button className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+              1
+            </button>
+            <button className="bg-blue-500 text-white px-3 py-1 rounded-full">
+              3
+            </button>
+            <button className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+              4
+            </button>
+            <button className="bg-gray-200 text-gray-600 px-3 py-1 rounded-full">
+              &gt;
+            </button>
+          </div>
+        </div>
       </div>
-    </>
+      <AddSubcategory setSubModal={setSubModal} subModal={subModal} />
+    </div>
   );
 };
 

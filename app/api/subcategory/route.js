@@ -5,32 +5,32 @@ export async function POST(req) {
   try {
     const { name } = await req.json();
 
-    // Validate required fields
+    // Validate required fields.
     if (!name) {
       return NextResponse.json(
-        { message: "Brand name is required." },
+        { message: "Subcategory name is required." },
         { status: 400 }
       );
     }
 
-    // Check if brand name exists
-    const checkBrand = `SELECT COUNT(*) AS count FROM brands WHERE name = ?`;
-    const [result] = await db.query(checkBrand, [name]);
+    // Check if subcategory name exists.
+    const checkSub = `SELECT COUNT(*) AS count FROM subcategory WHERE name = ?`;
+    const [result] = await db.query(checkSub, [name]);
 
     if (result[0].count > 0) {
       return NextResponse.json(
-        { message: "This Brand name already exists." },
+        { message: "This Subcategory name already exists." },
         { status: 400 }
       );
     }
 
-    // Add the new brand
-    const addBrand = `INSERT INTO brands (name) VALUES (?)`;
-    await db.query(addBrand, [name]);
+    // Add the new subcategory
+    const addSub = `INSERT INTO subcategory (name) VALUES (?)`;
+    await db.query(addSub, [name]);
 
     return NextResponse.json({
       status: true,
-      message: "Brand created successfully",
+      message: "Subcategory created successfully",
     });
   } catch (error) {
     console.error("Error:", error);
@@ -48,6 +48,7 @@ export async function DELETE(req) {
     let id = parseInt(searchParams.get("id")) || "";
 
     // Validate required fields
+
     if (!id) {
       return NextResponse.json({
         message: "Product id required.",
@@ -56,20 +57,20 @@ export async function DELETE(req) {
     }
 
     // Check if brand exists
-    const checkBrandExist = `SELECT COUNT(*) AS count FROM brands WHERE id = ?`;
-    const [result] = await db.query(checkBrandExist, [id]);
+    const checkSubExist = `SELECT COUNT(*) AS count FROM subcategory WHERE id = ?`;
+    const [result] = await db.query(checkSubExist, [id]);
 
     if (result[0].count == 0) {
       return NextResponse.json({ message: "Id doesn't exist.", status: 404 });
     }
 
     // Delete the brand
-    const deleteBrand = `DELETE FROM brands WHERE id = ?`;
-    await db.query(deleteBrand, [id]);
+    const deleteSub = `DELETE FROM subcategory WHERE id = ?`;
+    await db.query(deleteSub, [id]);
 
     return NextResponse.json({
       status: 200,
-      message: "Brand deleted successfully",
+      message: "Subcategory deleted successfully",
     });
   } catch (error) {
     console.error("Error:", error);
@@ -79,7 +80,6 @@ export async function DELETE(req) {
     );
   }
 }
-
 
 export async function GET(req) {
   try {
@@ -109,19 +109,18 @@ export async function GET(req) {
       ? `WHERE ${whereClause.join(" AND ")}`
       : "";
 
-    const getBrands = `SELECT * FROM brands ${whereSQL} LIMIT ? OFFSET ?`;
+    const getSubcategory = `SELECT * FROM subcategory ${whereSQL} LIMIT ? OFFSET ?`;
     values.push(limit, offset);
-    console.log("bd", getBrands);
-    const [brands] = await db.query(getBrands, values);
+    const [subcategory] = await db.query(getSubcategory, values);
 
-    const countQuery = `SELECT COUNT(*) AS total FROM brands ${whereSQL}`;
+    const countQuery = `SELECT COUNT(*) AS total FROM subcategory ${whereSQL}`;
     const [countResult] = await db.query(countQuery, values.slice(0, -2)); // Last 2 params limit/offset hata rahe hain
 
     const total = countResult[0]?.total || 0;
 
     return NextResponse.json({
       status: true,
-      data: brands,
+      data: subcategory,
       total,
       page,
       totalPages: Math.ceil(total / limit),

@@ -16,7 +16,7 @@ const page = () => {
               <form className="p-6 md:p-8">
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col items-center text-center">
-                    <h1 className="text-2xl font-bold">Welcome back</h1>
+                    <h1 className="text-2xl font-bold">Welcome Back</h1>
                     <p className="text-balance text-muted-foreground">
                       Login to your Acme Inc account
                     </p>
@@ -100,11 +100,11 @@ const page = () => {
               </div>
             </CardContent>
           </Card>
-          {/* <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
+          <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
             By clicking continue, you agree to our{" "}
             <Link href="#">Terms of Service</Link> and{" "}
             <Link href="#">Privacy Policy</Link>.
-          </div> */}
+          </div>
         </div>
       </div>
     </div>

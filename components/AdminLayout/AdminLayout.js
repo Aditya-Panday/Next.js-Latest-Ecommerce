@@ -37,11 +37,7 @@ const menuItems = [
     label: "Subcategories",
     href: "/dashboard/categories",
   },
-  {
-    icon: ChartBar,
-    label: "Mainategories",
-    href: "/dashboard/maincategories",
-  },
+
   { icon: Quote, label: "Testimonial", href: "/dashboard/testimonial" },
   { icon: Users, label: "Users", href: "/dashboard/users" },
   { icon: ListOrdered, label: "Orders", href: "/dashboard/orders" },

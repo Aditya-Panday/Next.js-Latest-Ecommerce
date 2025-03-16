@@ -22,16 +22,18 @@ export async function POST(req) {
     });
   } catch (error) {
     console.error("Error:", error);
-    return NextResponse.json({
-      message: "An internal server error occurred",
-      status: 500,
-    });
+    return NextResponse.json(
+      { message: "An internal server error occurred" },
+      { status: 500 }
+    );
   }
 }
 
 export async function DELETE(req) {
   try {
-    const { id } = await req.json();
+    const { searchParams } = new URL(req.url);
+
+    let id = parseInt(searchParams.get("id")) || "";
 
     // Validate required fields
     if (!id) {
@@ -56,6 +58,41 @@ export async function DELETE(req) {
     return NextResponse.json({
       status: 200,
       message: "Testimonial deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return NextResponse.json(
+      { message: "An internal server error occurred" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(req) {
+  try {
+    const { searchParams } = new URL(req.url);
+
+    let page = parseInt(searchParams.get("page")) || 1;
+    let limit = parseInt(searchParams.get("limit")) || 10;
+    let offset = (page - 1) * limit;
+
+    // ✅ Data fetch karne ke liye query
+    const getTestimonial = `SELECT * FROM testimonials LIMIT ? OFFSET ?`;
+    const [testimonial] = await db.query(getTestimonial, [limit, offset]);
+
+    // ✅ Total count fetch karne ke liye query
+    const countQuery = `SELECT COUNT(*) AS total FROM testimonials`;
+    const [countResult] = await db.query(countQuery);
+
+    const total = countResult[0]?.total || 0;
+
+    // ✅ Response ko return karein
+    return NextResponse.json({
+      status: true,
+      data: testimonial,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     console.error("Error:", error);

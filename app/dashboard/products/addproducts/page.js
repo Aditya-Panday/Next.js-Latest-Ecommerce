@@ -1,10 +1,10 @@
-import ProductTable from "@/components/AdminLayout/ProductSections/ProductTable";
 import React from "react";
+import AddProdcutSection from "@/components/AdminLayout/ProductSections/AddProductSection";
 
 const page = () => {
   return (
     <>
-      <ProductTable />
+      <AddProdcutSection />
     </>
   );
 };

@@ -11,5 +11,5 @@ const dbConfig = {
 };
 
 const db = mysql.createPool(dbConfig);
-module.exports = { db };
 export default db;
+export { db };
