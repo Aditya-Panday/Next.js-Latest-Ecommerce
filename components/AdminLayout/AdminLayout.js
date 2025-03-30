@@ -23,7 +23,7 @@ const menuItems = [
     label: "Products",
     href: "/dashboard/products",
     subItems: [
-      { label: "Add Products", href: "/dashboard/products/addproducts" },
+      { label: "Add Product", href: "/dashboard/products/addproduct" },
     ],
   },
   {
@@ -41,6 +41,7 @@ const menuItems = [
   { icon: Quote, label: "Testimonial", href: "/dashboard/testimonial" },
   { icon: Users, label: "Users", href: "/dashboard/users" },
   { icon: ListOrdered, label: "Orders", href: "/dashboard/orders" },
+  { icon: ListOrdered, label: "Subscribers", href: "/dashboard/subscribers" },
 
   {
     icon: MessageCircleMore,

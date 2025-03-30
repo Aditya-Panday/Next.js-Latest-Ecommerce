@@ -1,5 +1,11 @@
 import React, { useState } from "react";
 import { useAddBrandMutation } from "@/lib/features/adminApi/brandSlice";
+import { z } from "zod";
+
+const brandSchema = z
+  .string()
+  .min(1, "Brand name is required.")
+  .max(10, "Brand name must be at most 10 characters.");
 
 const AddBrand = ({ brandModal, setBrandModal }) => {
   const [brandName, setBrandName] = useState("");
@@ -10,16 +16,17 @@ const AddBrand = ({ brandModal, setBrandModal }) => {
   const handleSubmit = async () => {
     setErrorMsg("");
     try {
-      if (!brandName.trim()) {
-        setErrorMsg("Brand name is required.");
-        return;
-      }
+      brandSchema.parse(brandName);
 
       await addBrand(brandName).unwrap();
       setBrandModal(false);
       setBrandName("");
     } catch (err) {
-      setErrorMsg(err?.data?.message || "Failed to add brand.");
+      if (err instanceof z.ZodError) {
+        setErrorMsg(err.errors[0].message); // Show the first validation error
+      } else {
+        setErrorMsg(err?.data?.message || "Failed to add brand.");
+      }
     } finally {
       setTimeout(() => {
         setErrorMsg("");
@@ -74,7 +81,7 @@ const AddBrand = ({ brandModal, setBrandModal }) => {
           </div>
           <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-500 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-black text-base font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
               onClick={() => handleSubmit(false)}
               disabled={isLoading}
             >

@@ -59,37 +59,6 @@ export default function CategoryPage() {
   const ratings = [5, 4, 3, 2, 1];
   const genders = ["Mens", "Womens", "Kids", "Unisex"];
 
-  // Loading skeleton for product cards
-  //   const ProductSkeleton = () => (
-  //     <div className="bg-background rounded-lg shadow-sm p-4 animate-pulse">
-  //       <div className="w-full h-48 bg-muted rounded-md mb-4"></div>
-  //       <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
-  //       <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
-  //       <div className="h-6 bg-muted rounded w-1/3 mb-4"></div>
-  //       <div className="h-10 bg-muted rounded w-full"></div>
-  //     </div>
-  //   );
-
-  // Render star rating
-  //   const RatingStars = ({ rating }) => {
-  //     return (
-  //       <div className="flex items-center">
-  //         {[1, 2, 3, 4, 5].map((star) => (
-  //           <Star
-  //             key={star}
-  //             size={16}
-  //             className={`${
-  //               star <= Math.round(rating)
-  //                 ? "text-yellow-400 fill-yellow-400"
-  //                 : "text-gray-300"
-  //             }`}
-  //           />
-  //         ))}
-  //         <span className="ml-1 text-sm text-gray-600">({rating})</span>
-  //       </div>
-  //     );
-  //   };
-
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header with search and mobile filter toggle */}
@@ -142,7 +111,7 @@ export default function CategoryPage() {
                     step={10}
                     value={priceRange}
                     onValueChange={(value) => setPriceRange(value)}
-                    className="mb-4"
+                    className="mb-4 slider-custom"
                   />
                   <div className="flex justify-between text-sm">
                     <span>${priceRange[0]}</span>
