@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import {
-  Check,
-  ChevronsUpDown,
-  // Loader2,
-  Plus,
-  Trash,
-  Upload,
-  X,
-} from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Trash, Upload, X } from "lucide-react";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
@@ -46,9 +38,15 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { categoryOptions, folderStructure } from "@/lib/constants/constantFunc";
-import { ChunkUpload } from "@/lib/constants/aws-function/UploadChunk";
-import { useS3MultipartUploadMutation } from "@/lib/features/s3Api/s3Slice";
+import {
+  allowedTypes,
+  categoryOptions,
+  folderStructure,
+} from "@/lib/constants/constantFunc";
+import { FileUpload } from "@/utils/aws/awsUpload";
+import { ToastContainer, toast } from 'react-toastify';
+import CircleLoder from "@/components/CircleLoder";
+
 
 export default function AddProduct({
   createData,
@@ -61,15 +59,15 @@ export default function AddProduct({
   handleRemoveColor,
   handleSubmit,
 }) {
+
   const [sizeOpen, setSizeOpen] = useState(false);
   const [colorInput, setColorInput] = useState("");
 
   // Image upload state
   const [images, setImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
-  // console.log("imagesdata", images);
-
-  const [s3MultipartUpload] = useS3MultipartUploadMutation();
+  console.log("imagesdata", images);
 
   // Handle image removal
   const handleRemoveImage = (index) => {
@@ -85,26 +83,68 @@ export default function AddProduct({
     const keyFilePath =
       process.env.NEXT_PUBLIC_AWS_GBP_FOLDER + folderStructure();
 
-    const uploadedKey = await ChunkUpload(
-      images,
-      keyFilePath,
-      s3MultipartUpload
-    );
-    console.log("uploadedKey", uploadedKey);
-    setFormState({ ...formState, image_url: uploadedKey });
+    try {
+      setUploading(true);
+      toast.info(`Wait for a moment files are uploading..`, {
+        autoClose: 1500,
+      });
+      const uploadedKey = await FileUpload(images, keyFilePath);
+      if (uploadedKey) {
+        toast.success("Image uploaded successfully.", {
+          autoClose: 1500,
+        });
+      }
+      console.log("uploadedKey", uploadedKey);
+      setFormState({ ...formState, image_url: uploadedKey });
+    }
+    catch (error) {
+      console.error(error)
+    }
+    finally {
+      setUploading(false);
+    }
   };
 
-  // Handle image selection
-  const handleImageSelect = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newImages = Array.from(e.target.files).map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-        progress: 0,
-      }));
 
-      setImages((prev) => [...prev, ...newImages]);
+  const handleImageSelect = (e) => {
+    const selectedFiles = Array.from(e.target.files || []);
+
+    const totalFiles = images.length + selectedFiles.length;
+    if (totalFiles > 5) {
+      toast.error("You can only upload up to 5 images.", {
+        autoClose: 1500,
+      });
+      return;
     }
+
+    const newValidImages = [];
+
+    selectedFiles.forEach((file) => {
+      const isDuplicate = images.some(
+        (img) => img.name === file.name && img.size === file.size
+      );
+
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Invalid File format.`, {
+          autoClose: 1500,
+        });
+      } else if (isDuplicate) {
+        toast.error(`Duplicate files included please select another file or change the file name.`, {
+          autoClose: 1500,
+        });
+      } else {
+        file.preview = URL.createObjectURL(file);
+        file.progress = 0;
+        file.status = false;
+        newValidImages.push(file);
+      }
+    });
+
+    if (newValidImages.length > 0) {
+      setImages((prev) => [...prev, ...newValidImages]);
+    }
+
+    e.target.value = null; // reset input in case same file is selected again
   };
 
   return (
@@ -240,9 +280,8 @@ export default function AddProduct({
                         className="w-full justify-between h-10"
                       >
                         {formState.sizes?.length > 0
-                          ? `${formState.sizes.length} size${
-                              formState.sizes.length > 1 ? "s" : ""
-                            } selected`
+                          ? `${formState.sizes.length} size${formState.sizes.length > 1 ? "s" : ""
+                          } selected`
                           : "Select sizes"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -260,11 +299,10 @@ export default function AddProduct({
                                 onSelect={() => handleSizeSelect(size.value)}
                               >
                                 <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    formState?.sizes?.includes(size.value)
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  }`}
+                                  className={`mr-2 h-4 w-4 ${formState?.sizes?.includes(size.value)
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                    }`}
                                 />
                                 {size.label}
                               </CommandItem>
@@ -382,24 +420,35 @@ export default function AddProduct({
                     <Upload className="h-10 w-10 text-primary/60" />
                     <h3 className="text-lg font-medium">Upload Images</h3>
                     <p className="text-sm text-muted-foreground">
+                      You can select only 5 images.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Allowed Extensions: (webp, jpeg, jpg, avif, gif, png)
+                    </p><p className="text-sm text-muted-foreground">
                       Drag and drop your images here or click to browse
                     </p>
+
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      Select Images
+                      Select Images ({images.length}/5)
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => uploadImages(images)}
-                    >
-                      Upload Images
-                    </Button>
+
+                    {images.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="p-4"
+                        onClick={() => uploadImages(images)}
+                      >
+                        {uploading ? <CircleLoder /> : "Upload Images "}
+                      </Button>
+                    )}
                   </div>
                 </div>
+
 
                 {images.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
@@ -427,14 +476,18 @@ export default function AddProduct({
                           <div className="absolute bottom-1 left-1 right-1 bg-gray-300 rounded-full overflow-hidden h-4">
                             <div
                               style={{ width: `${image.progress}%` }}
-                              className={`h-full ${
-                                image.progress === 100
-                                  ? "bg-green-500"
-                                  : "bg-blue-500"
-                              } transition-all duration-300`}
+                              className={`h-full ${image.progress === 100
+                                ? "bg-green-500"
+                                : "bg-blue-500"
+                                } transition-all duration-300`}
                             >
-                              <span className="text-xs text-white font-semibold p-4">
-                                {10}%
+                              <span
+                                className={`text-xs px-4 py-1 ${image.progress > 0
+                                  ? "text-gray-500"
+                                  : "text-black"
+                                  }`}
+                              >
+                                {image.progress}%
                               </span>
                             </div>
                           </div>
@@ -445,7 +498,6 @@ export default function AddProduct({
                 )}
               </div>
             </div>
-
             {/* Pricing */}
             <div className="space-y-4 pt-2">
               <h3 className="text-lg font-medium">Pricing</h3>
@@ -513,6 +565,7 @@ export default function AddProduct({
           </CardFooter>
         </form>
       </Card>
+      <ToastContainer />
     </div>
   );
 }

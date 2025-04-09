@@ -1,4 +1,4 @@
-import { s3 } from "@/lib/constants/aws-function/s3Config";
+import { s3 } from "@/utils/aws/s3Config";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
