@@ -109,7 +109,7 @@ export async function GET(req) {
       ? `WHERE ${whereClause.join(" AND ")}`
       : "";
 
-    const getBrands = `SELECT * FROM brands ${whereSQL} LIMIT ? OFFSET ?`;
+    const getBrands = `SELECT * FROM brands ${whereSQL} ORDER BY id DESC LIMIT ? OFFSET ?`;
     values.push(limit, offset);
     console.log("bd", getBrands);
     const [brands] = await db.query(getBrands, values);

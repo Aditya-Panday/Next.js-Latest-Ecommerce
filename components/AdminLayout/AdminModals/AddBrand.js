@@ -5,7 +5,7 @@ import { z } from "zod";
 const brandSchema = z
   .string()
   .min(1, "Brand name is required.")
-  .max(10, "Brand name must be at most 10 characters.");
+  .max(20, "Brand name must be at most 10 characters.");
 
 const AddBrand = ({ brandModal, setBrandModal }) => {
   const [brandName, setBrandName] = useState("");

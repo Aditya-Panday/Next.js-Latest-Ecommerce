@@ -1,9 +1,7 @@
 "use client";
-
 import { useState, useRef } from "react";
 import { Check, ChevronsUpDown, Plus, Trash, Upload, X } from "lucide-react";
 import Image from "next/image";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -55,9 +53,9 @@ export default function AddProduct({
   setFormState,
   sizes,
   handleSizeSelect,
-  handleAddColor,
   handleRemoveColor,
   handleSubmit,
+  isLoadingData,
 }) {
 
   const [sizeOpen, setSizeOpen] = useState(false);
@@ -67,8 +65,7 @@ export default function AddProduct({
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
-  console.log("imagesdata", images);
-
+  console.log(images)
   // Handle image removal
   const handleRemoveImage = (index) => {
     setImages((prev) => {
@@ -79,23 +76,50 @@ export default function AddProduct({
     });
   };
 
+  const handleAddColor = () => {
+    if (colorInput.trim() && !formState.colors.includes(colorInput.trim())) {
+      setFormState((prev) => ({
+        ...prev,
+        colors: [...prev.colors, colorInput.trim()],
+      }));
+    }
+    setColorInput("");
+  };
+
   const uploadImages = async (images) => {
     const keyFilePath =
       process.env.NEXT_PUBLIC_AWS_GBP_FOLDER + folderStructure();
+    const imagesToUpload = images.filter((file) => !file.status);
+
+    if (imagesToUpload.length === 0) {
+      toast.error(`Please select images...`, {
+        autoClose: 1500,
+      });
+      return;
+    }
 
     try {
       setUploading(true);
       toast.info(`Wait for a moment files are uploading..`, {
         autoClose: 1500,
       });
-      const uploadedKey = await FileUpload(images, keyFilePath);
+      const uploadedKey = await FileUpload(imagesToUpload, keyFilePath);
       if (uploadedKey) {
         toast.success("Image uploaded successfully.", {
           autoClose: 1500,
         });
       }
       console.log("uploadedKey", uploadedKey);
-      setFormState({ ...formState, image_url: uploadedKey });
+
+      setFormState((prevState) => ({
+        ...prevState,
+        image_url: [
+          ...(prevState.image_url || []),
+          ...(Array.isArray(uploadedKey)    // Check if uploadedKey is an array (multiple images)
+            ? uploadedKey.map((item) => item.location)
+            : [uploadedKey.location]),
+        ],
+      }));
     }
     catch (error) {
       console.error(error)
@@ -169,6 +193,7 @@ export default function AddProduct({
                     id="product-name"
                     placeholder="Enter product name"
                     value={formState.product_name}
+                    disabled={isLoadingData}
                     onChange={(e) =>
                       setFormState({
                         ...formState,
@@ -177,11 +202,13 @@ export default function AddProduct({
                     }
                     required
                   />
-                </div>
+                  {/* {formState?.errors?.sizes && !formState?.sizes && (
+                    <p className="text-red-500">{formState.errors.sizes}</p>
+                  )} */}
+                  <p className="text-red-500">
+                    {formState.errors.product_name}
+                  </p>
 
-                <div className="space-y-2">
-                  <Label htmlFor="sku">SKU</Label>
-                  <Input id="sku" placeholder="Enter SKU" />
                 </div>
               </div>
 
@@ -196,7 +223,8 @@ export default function AddProduct({
                       setFormState({ ...formState, brand_name: value })
                     }
                     required
-                    disabled={isCreateDataLoading}
+                    disabled={isCreateDataLoading || isLoadingData}
+
                   >
                     <SelectTrigger id="brand">
                       <SelectValue placeholder="Select brand" />
@@ -209,6 +237,9 @@ export default function AddProduct({
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-red-500">
+                    {formState?.errors.brand_name}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -220,7 +251,7 @@ export default function AddProduct({
                     onValueChange={(value) => {
                       setFormState({ ...formState, sub_category: value });
                     }}
-                    disabled={isCreateDataLoading}
+                    disabled={isCreateDataLoading || isLoadingData}
                     required
                   >
                     <SelectTrigger id="category">
@@ -234,12 +265,16 @@ export default function AddProduct({
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-red-500">
+                    {formState?.errors.sub_category}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subcategory">Category</Label>
                   <Select
                     value={formState.category_name}
+                    disabled={isLoadingData}
                     onValueChange={(value) =>
                       setFormState({ ...formState, category_name: value })
                     }
@@ -258,6 +293,9 @@ export default function AddProduct({
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-red-500">
+                    {formState?.errors.category_name}
+                  </p>
                 </div>
               </div>
             </div>
@@ -275,6 +313,7 @@ export default function AddProduct({
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
+                        disabled={isLoadingData}
                         role="combobox"
                         aria-expanded={sizeOpen}
                         className="w-full justify-between h-10"
@@ -312,6 +351,9 @@ export default function AddProduct({
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  <p className="text-red-500">
+                    {formState?.errors.sizes}
+                  </p>
 
                   {formState.sizes?.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -334,6 +376,7 @@ export default function AddProduct({
                       ))}
                     </div>
                   )}
+
                 </div>
 
                 {/* Colors */}
@@ -383,6 +426,9 @@ export default function AddProduct({
                       ))}
                     </div>
                   )}
+                  <p className="text-red-500">
+                    {formState?.errors.colors}
+                  </p>
                 </div>
               </div>
             </div>
@@ -399,6 +445,9 @@ export default function AddProduct({
                 }
                 className="min-h-32"
               />
+              <p className="text-red-500">
+                {formState?.errors.description}
+              </p>
             </div>
 
             {/* Images */}
@@ -427,10 +476,13 @@ export default function AddProduct({
                     </p><p className="text-sm text-muted-foreground">
                       Drag and drop your images here or click to browse
                     </p>
-
+                    <p className="text-red-500">
+                      {formState?.errors.image_url}
+                    </p>
                     <Button
                       type="button"
                       variant="outline"
+                      disabled={uploading}
                       onClick={() => fileInputRef.current?.click()}
                     >
                       Select Images ({images.length}/5)
@@ -441,6 +493,7 @@ export default function AddProduct({
                         type="button"
                         variant="outline"
                         className="p-4"
+                        disabled={uploading}
                         onClick={() => uploadImages(images)}
                       >
                         {uploading ? <CircleLoder /> : "Upload Images "}
@@ -510,13 +563,15 @@ export default function AddProduct({
                   <Input
                     id="price"
                     type="number"
-                    placeholder="0.00"
+                    placeholder="0"
                     value={formState.price}
                     onChange={(e) =>
                       setFormState({ ...formState, price: e.target.value })
                     }
-                    required
                   />
+                  <p className="text-red-500">
+                    {formState?.errors.price}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -532,36 +587,69 @@ export default function AddProduct({
                       setFormState({ ...formState, discount: e.target.value })
                     }
                   />
+                  <p className="text-red-500">
+                    {formState?.errors.discount}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Status */}
-            <div className="space-y-4 pt-2">
-              <h3 className="text-lg font-medium">Status</h3>
+            <div className="flex gap-10">
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="status"
-                  checked={formState.status}
-                  onCheckedChange={(checked) =>
-                    setFormState({ ...formState, status: checked ? 1 : 0 })
-                  }
-                />
-                <Label htmlFor="status">
-                  {formState.status == 1 ? "Active" : "Inactive"}
-                </Label>
+              <div className="space-y-4 pt-2">
+                <h3 className="text-lg font-medium">Status</h3>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="status"
+                    checked={formState.status}
+                    onCheckedChange={(checked) =>
+                      setFormState({ ...formState, status: checked ? 1 : 0 })
+                    }
+                  />
+                  <Label htmlFor="status">
+                    {formState.status == 1 ? "Active" : "Inactive"}
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {formState.status == 1
+                    ? "Product will be visible to customers"
+                    : "Product will be hidden from customers"}
+                </p>
+                <p className="text-red-500">
+                  {formState?.errors.status}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {formState.status == 1
-                  ? "Product will be visible to customers"
-                  : "Product will be hidden from customers"}
-              </p>
+              <div className="space-y-4 pt-2">
+                <h3 className="text-lg font-medium">Status</h3>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="status"
+                    checked={formState.stock}
+                    onCheckedChange={(checked) =>
+                      setFormState({ ...formState, stock: checked ? 1 : 0 })
+                    }
+                  />
+                  <Label htmlFor="stock">
+                    {formState.stock == 1 ? "Stock" : "OutofStock"}
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {formState.stock == 1
+                    ? "Product in stock."
+                    : "Product is out ofstock."}
+                </p>
+                <p className="text-red-500">
+                  {formState?.errors.stock}
+                </p>
+              </div>
             </div>
           </CardContent>
 
           <CardFooter className="flex justify-end border-t bg-muted/10 p-6">
-            <Button type="submit">Save Product</Button>
+            <Button onClick={(e) => handleSubmit(e)}>Save Product</Button>
           </CardFooter>
         </form>
       </Card>
