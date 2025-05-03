@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Slider } from "@/components/ui/slider";
+// import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Star, Search, SlidersHorizontal, X } from "lucide-react";
 import DynamicProductCard from "../DynamicProductCard/DynamicProductCard";
+import ProductCardSkeleton from "../DynamicProductCard/ProductCardSkelton";
 
-export default function CategoryPage() {
+export default function CategoryPage({ productCollection, isProdLoading }) {
   // State for filters
   const [priceRange, setPriceRange] = useState([0, 1000]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,7 +58,7 @@ export default function CategoryPage() {
     new Set(productsData.map((product) => product.brand))
   );
   const ratings = [5, 4, 3, 2, 1];
-  const genders = ["Mens", "Womens", "Kids", "Unisex"];
+  const genders = ["Mens", "Womens", "Kids"];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -101,24 +102,6 @@ export default function CategoryPage() {
                 </Button>
               </div>
 
-              {/* Price Range Filter */}
-              <div className="mb-6">
-                <h3 className="text-md font-medium mb-3">Price Range</h3>
-                <div className="px-2">
-                  <Slider
-                    defaultValue={[0, 1000]}
-                    max={1000}
-                    step={10}
-                    value={priceRange}
-                    onValueChange={(value) => setPriceRange(value)}
-                    className="mb-4 slider-custom"
-                  />
-                  <div className="flex justify-between text-sm">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
-                  </div>
-                </div>
-              </div>
 
               {/* Brand Filter */}
               <div className="mb-6">
@@ -195,7 +178,7 @@ export default function CategoryPage() {
         {isMobileFilterOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
             <div className="absolute right-0 top-0 h-full w-80 bg-background p-4 overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center ">
                 <h2 className="text-lg font-semibold">Filters</h2>
                 <Button
                   variant="ghost"
@@ -205,25 +188,7 @@ export default function CategoryPage() {
                   <X size={20} />
                 </Button>
               </div>
-
-              {/* Price Range Filter */}
-              <div className="mb-6">
-                <h3 className="text-md font-medium mb-3">Price Range</h3>
-                <div className="px-2">
-                  <Slider
-                    defaultValue={[0, 1000]}
-                    max={1000}
-                    step={10}
-                    value={priceRange}
-                    onValueChange={(value) => setPriceRange(value)}
-                    className="mb-4"
-                  />
-                  <div className="flex justify-between text-sm">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
-                  </div>
-                </div>
-              </div>
+              <hr className="mb-6 font-semibold" />
 
               {/* Brand Filter */}
               <div className="mb-6">
@@ -346,9 +311,11 @@ export default function CategoryPage() {
             </div>
           ) : ( */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 xxl:grid-cols-4 gap-6">
-            {productsData.map((product, index) => (
-              <DynamicProductCard key={index} product={product} />
-            ))}
+            {isProdLoading
+              ? Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)
+              : productCollection?.products?.map((product) => (
+                <DynamicProductCard key={product.product_id} product={product} />
+              ))}
           </div>
           {/* )} */}
         </div>

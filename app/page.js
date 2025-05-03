@@ -1,7 +1,10 @@
+'use client'
 import DynamicProductCard from "@/components/DynamicProductCard/DynamicProductCard";
+import ProductCardSkeleton from "@/components/DynamicProductCard/ProductCardSkelton";
 import HomeLayout from "@/components/HomeLayout/HomeLayout";
 import ProductCategory from "@/components/HomeLayout/ProductCategory";
 import SubscribeNewsletter from "@/components/HomeLayout/SubscribeNewsletter";
+import { useGetMainProductDataQuery } from "@/lib/features/productApi/productMainSlice";
 import Image from "next/image";
 
 export default function Home() {
@@ -35,6 +38,26 @@ export default function Home() {
       discount: 999,
     },
   ];
+  const {
+    data: mensCollection,
+    isLoading: isMLoading,
+  } = useGetMainProductDataQuery({
+    category: "male",
+    page: 1,
+    limit: 10,
+  });
+  console.log("dataMale", mensCollection)
+
+  const {
+    data: femaleCollection,
+    isLoading: isfLoading,
+  } = useGetMainProductDataQuery({
+    category: "female",
+    page: 1,
+    limit: 10,
+  });
+  console.log("datafem", femaleCollection)
+
   return (
     <HomeLayout>
       {/* Main Content */}
@@ -89,9 +112,11 @@ export default function Home() {
         <div className="container">
           <h2 className="text-3xl font-bold mb-8">Men&apos;s Collection</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <DynamicProductCard key={product.id} product={product} />
-            ))}
+            {isMLoading
+              ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
+              : mensCollection?.products?.map((product) => (
+                <DynamicProductCard key={product.product_id} product={product} />
+              ))}
           </div>
         </div>
       </section>
@@ -101,12 +126,15 @@ export default function Home() {
         <div className="container">
           <h2 className="text-3xl font-bold mb-8">Women&apos;s Collection</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <DynamicProductCard key={product.id} product={product} />
-            ))}
+            {isfLoading
+              ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
+              : femaleCollection?.products?.map((product) => (
+                <DynamicProductCard key={product.product_id} product={product} />
+              ))}
           </div>
         </div>
       </section>
+      <ProductCardSkeleton />
 
       {/* Subscribe Newsletter */}
       <SubscribeNewsletter />

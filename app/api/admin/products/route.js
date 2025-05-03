@@ -23,7 +23,6 @@ export async function POST(req) {
       colors,
       status,
     } = validatedData;
-    console.log("validated data", validatedData);
 
     // Check if product already exists (optimized query)
     const checkQuery = `SELECT COUNT(*) AS count FROM products WHERE product_name = ?`;
@@ -110,8 +109,8 @@ const productsData = async (req) => {
     const values = [];
 
     if (id) {
-      filters.push("product_id = ?");
-      values.push(id);
+      filters.push("product_id LIKE ?");
+      values.push(`${id}%`);
     }
     if (status) {
       filters.push("status = ?");

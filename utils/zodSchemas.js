@@ -41,5 +41,4 @@ export const productSchema = z.object({
   stock: z.enum(["0", "1"], {
     invalid_type_error: "Stock must be either '0' or '1'.",
   }),
-
 });

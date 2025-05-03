@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Check, ChevronsUpDown, Plus, Trash, Upload, X } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export default function AddProduct({
   handleRemoveColor,
   handleSubmit,
   isLoadingData,
+  clearImages
 }) {
 
   const [sizeOpen, setSizeOpen] = useState(false);
@@ -65,7 +66,7 @@ export default function AddProduct({
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
-  console.log(images)
+
   // Handle image removal
   const handleRemoveImage = (index) => {
     setImages((prev) => {
@@ -170,6 +171,17 @@ export default function AddProduct({
 
     e.target.value = null; // reset input in case same file is selected again
   };
+
+  const resetImages = () => {
+    setImages([]);
+  };
+
+  // ✅ If clearImages prop exists, set it when component renders
+  useEffect(() => {
+    if (typeof clearImages === "function") {
+      clearImages(resetImages);
+    }
+  }, [clearImages]);
 
   return (
     <div className="container mx-auto py-10 px-4 max-w-5xl">
@@ -602,49 +614,47 @@ export default function AddProduct({
 
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="status"
-                    checked={formState.status}
+                    id="product-status" // ✅ unique ID
+                    checked={formState.status === "1"}
                     onCheckedChange={(checked) =>
-                      setFormState({ ...formState, status: checked ? 1 : 0 })
+                      setFormState({ ...formState, status: checked ? "1" : "0" })
                     }
                   />
-                  <Label htmlFor="status">
-                    {formState.status == 1 ? "Active" : "Inactive"}
+                  <Label htmlFor="product-status">
+                    {formState.status === "1" ? "Active" : "Inactive"}
                   </Label>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {formState.status == 1
-                    ? "Product will be visible to customers"
-                    : "Product will be hidden from customers"}
+                  {formState.status === "1"
+                    ? "Product will be visible to customers."
+                    : "Product will be hidden from customers."}
                 </p>
-                <p className="text-red-500">
-                  {formState?.errors.status}
-                </p>
+                <p className="text-red-500">{formState?.errors?.status}</p>
               </div>
+
               <div className="space-y-4 pt-2">
-                <h3 className="text-lg font-medium">Status</h3>
+                <h3 className="text-lg font-medium">Stock Status</h3> {/* ✅ Better heading */}
 
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="status"
-                    checked={formState.stock}
+                    id="product-stock" // ✅ unique ID
+                    checked={formState.stock === "1"}
                     onCheckedChange={(checked) =>
-                      setFormState({ ...formState, stock: checked ? 1 : 0 })
+                      setFormState({ ...formState, stock: checked ? "1" : "0" })
                     }
                   />
-                  <Label htmlFor="stock">
-                    {formState.stock == 1 ? "Stock" : "OutofStock"}
+                  <Label htmlFor="product-stock">
+                    {formState.stock === "1" ? "In Stock" : "Out of Stock"}
                   </Label>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {formState.stock == 1
-                    ? "Product in stock."
-                    : "Product is out ofstock."}
+                  {formState.stock === "1"
+                    ? "Product is available in stock."
+                    : "Product is currently out of stock."}
                 </p>
-                <p className="text-red-500">
-                  {formState?.errors.stock}
-                </p>
+                <p className="text-red-500">{formState?.errors?.stock}</p>
               </div>
+
             </div>
           </CardContent>
 

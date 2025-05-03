@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import AddProduct from "@/components/AdminLayout/ProductSections/AddProduct";
 import { useAddProductMutation, useGetCreateProductDataQuery } from "@/lib/features/adminApi/productsSlics";
 import { sizesEnum } from "@/lib/constants/constantFunc";
@@ -9,10 +9,9 @@ import { toast } from 'react-toastify';
 const Page = () => {
   const { data, isLoading } = useGetCreateProductDataQuery({
     type: "createData"
-
   });
+  const clearImagesRef = useRef(null);
   const [addProduct, { isLoadingData }] = useAddProductMutation();
-
   const [formState, setFormState] = useState({
     product_name: "",
     description: "",
@@ -28,16 +27,14 @@ const Page = () => {
     errors: {},
     stock: "1",
   });
+
   // console.log("fm", formState)
   const sizes = sizesEnum.map((size) => ({ value: size, label: size }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("validation test");
-
-
+    // console.log("validation test");
     const validationResult = productSchema.safeParse(formState)
-
     if (!validationResult.success) {
       const newErrors = {};
       validationResult.error.errors.forEach((error) => {
@@ -53,7 +50,7 @@ const Page = () => {
 
     try {
       const result = await addProduct(formState).unwrap(); // .unwrap() will throw if error
-      console.log("API success:", result);
+      // console.log("API success:", result);
       toast.success("Product added successfully.", {
         autoClose: 2000,
       });
@@ -72,6 +69,9 @@ const Page = () => {
         errors: {},
         stock: "1",
       });
+      if (clearImagesRef.current) {
+        clearImagesRef.current();
+      }
 
       // Optionally, reset form here
     } catch (err) {
@@ -121,6 +121,7 @@ const Page = () => {
         handleRemoveColor={handleRemoveColor}
         handleSubmit={handleSubmit}
         isLoadingData={isLoadingData}
+        clearImages={(clearFn) => (clearImagesRef.current = clearFn)}
       />
     </>
   );
