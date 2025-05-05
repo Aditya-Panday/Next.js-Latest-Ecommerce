@@ -8,7 +8,7 @@ const DynamicProductCard = ({ product }) => {
   return (
     <div className="relative m-auto flex w-full max-w-xs flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
       <Link
-        href={product.product_name}
+        href={`/product-detail/${product.product_id}`}
         className="relative mx-3 mt-3 flex h-72 overflow-hidden rounded-xl"
       >
         <Image
@@ -18,9 +18,12 @@ const DynamicProductCard = ({ product }) => {
           width={500}
           height={500}
         />
-        <span className="absolute top-0 left-0 m-2 rounded-full bg-black px-2 text-center text-sm font-medium text-white">
-          {product.discount}% OFF
-        </span>
+        {product?.discount > 0 && (
+          <span className="absolute top-0 left-0 m-2 rounded-full bg-black px-2 text-center text-sm font-medium text-white">
+            {product.discount}% OFF
+          </span>
+        )}
+
       </Link>
       <div className="mt-4 px-5 pb-5">
         <h5 className="text-xl tracking-tight text-slate-900">
@@ -31,9 +34,12 @@ const DynamicProductCard = ({ product }) => {
             <span className="text-3xl font-bold text-slate-900 ">
               ₹{product.final_price}
             </span>
-            <span className="text-sm text-slate-900 line-through ml-2  ">
-              ₹{product.price}
-            </span>
+            {product?.discount > 0 && (
+              <span className="text-sm text-slate-900 line-through ml-2  ">
+                ₹{product.price}
+              </span>
+            )}
+
           </p>
           <div className="flex items-center">
             {Array(5)
@@ -54,7 +60,7 @@ const DynamicProductCard = ({ product }) => {
         <div className="flex items-center gap-2 justify-between">
           <Heart />
           <Link
-            href={product.product_name}
+            href={`/product-detail/${product.product_id}`}
             className="flex items-center justify-center rounded-md bg-slate-900 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
           >
             <ShoppingCart className="mr-2 h-6 w-6" />

@@ -46,7 +46,6 @@ export default function Home() {
     page: 1,
     limit: 10,
   });
-  console.log("dataMale", mensCollection)
 
   const {
     data: femaleCollection,
@@ -56,27 +55,26 @@ export default function Home() {
     page: 1,
     limit: 10,
   });
-  console.log("datafem", femaleCollection)
 
   return (
     <HomeLayout>
       {/* Main Content */}
-      {/* <main >
-        <section className="relative h-[70vh] bg-theme-50">
-          <div className="container h-full flex items-center">
-            <div className="max-w-2xl space-y-6 z-10">
-              <h1 className="text-6xl font-bold">Summer Collection 2024</h1>
-              <p className="text-xl text-gray-600">
-                Discover our latest arrivals and trending styles
-              </p>
-              <button className="bg-red-500 text-white px-4 py-2 rounded-lg">
-                Shop Now
-              </button>
+      {/* <main>
+          <section className="relative h-[70vh] bg-theme-50">
+            <div className="container h-full flex items-center">
+              <div className="max-w-2xl space-y-6 z-10">
+                <h1 className="text-6xl font-bold">Summer Collection 2024</h1>
+                <p className="text-xl text-gray-600">
+                  Discover our latest arrivals and trending styles
+                </p>
+                <button className="bg-red-500 text-white px-4 py-2 rounded-lg">
+                  Shop Now
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="absolute inset-0 banner-gradient" />
-        </section>
-      </main> */}
+            <div className="absolute inset-0 banner-gradient" />
+          </section>
+        </main> */}
       {/* Banner */}
       <div className="container mx-auto px-4 py-8 bg-white ">
         <main className="pt-16">
@@ -103,11 +101,11 @@ export default function Home() {
           </section>
         </main>
       </div>
+
       {/* Categories */}
       <ProductCategory />
 
       {/* Men's Section */}
-
       <section className="py-16 text-black" style={{ background: "#fdf8f6" }}>
         <div className="container">
           <h2 className="text-3xl font-bold mb-8">Men&apos;s Collection</h2>

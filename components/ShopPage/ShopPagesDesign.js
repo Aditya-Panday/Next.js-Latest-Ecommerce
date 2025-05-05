@@ -57,6 +57,7 @@ export default function CategoryPage({ productCollection, isProdLoading }) {
   const brands = Array.from(
     new Set(productsData.map((product) => product.brand))
   );
+  
   const ratings = [5, 4, 3, 2, 1];
   const genders = ["Mens", "Womens", "Kids"];
 

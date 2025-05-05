@@ -16,7 +16,6 @@ const Shop = () => {
     sort: "",
   });
 
-  console.log("dataMale", productCollection)
 
   return (
     <HomeLayout>

@@ -9,15 +9,16 @@ export async function GET(req) {
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const offset = (page - 1) * limit;
 
-    const categoryParam = searchParams.get("category"); // e.g. "male,female"
-    const brandParam = searchParams.get("brand");       // e.g. "Nike,Adidas"
+    const id = searchParams.get("productId"); // e.g. "#23".
+    const categoryParam = searchParams.get("category"); // e.g. "male,female".
+    const brandParam = searchParams.get("brand");       // e.g. "Nike,Adidas".
     const subParam = searchParams.get("sub"); // sort by subCategory. 
-    const sortParam = searchParams.get("sort"); // sort by price. 
+    const sortParam = searchParams.get("sort"); // sort by price.
+    // const searchParam = searchParams.get("search"); // Search by product name.
     const filters = [];
     const values = [];
 
     // Uses IN (?) clauses for flexible filtering.
-
     // Category filter (IN clause)
     if (categoryParam) {
         const categories = categoryParam.split(",");
@@ -36,6 +37,11 @@ export async function GET(req) {
         filters.push(`brand_name IN (${brands.map(() => "?").join(",")})`);
         values.push(...brands);
     }
+    if (id) {
+        filters.push(`product_id = ?`);
+        values.push(id);
+    }
+
     console.log("filter", filters)
     console.log("values", values)
 
@@ -62,6 +68,21 @@ export async function GET(req) {
         const [countResult] = await db.query(countQuery, values);
         const total = countResult[0]?.total || 0;
         const totalPages = Math.ceil(total / limit);
+        let relatedProducts = [];
+
+        if (id) {
+            const [productRes] = await db.query(`SELECT sub_category FROM products WHERE product_id = ? `, [id]);
+            console.log("produsctres", productRes)
+            const subCategory = productRes[0]?.sub_category;
+
+            if (subCategory) {
+                const [relatedRes] = await db.query(
+                    `SELECT * FROM products WHERE sub_category = ? LIMIT 4`,
+                    [subCategory, id]
+                );
+                relatedProducts = relatedRes;
+            }
+        }
 
         return NextResponse.json({
             success: true,
@@ -72,6 +93,7 @@ export async function GET(req) {
                 limit,
                 totalPages,
             },
+            ...(id && { relatedProducts }) // 👈 only include if `id` is truthy
         }, { status: 200 });
     } catch (error) {
         console.error("Database Error:", error);

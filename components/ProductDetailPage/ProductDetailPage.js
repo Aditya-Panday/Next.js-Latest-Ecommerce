@@ -1,23 +1,14 @@
 "use client";
-
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Minus, Plus, ShoppingCart, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import HomeLayout from "../HomeLayout/HomeLayout";
+import { useGetMainProductDataQuery } from "@/lib/features/productApi/productMainSlice";
+import ReuseableSkelton from "../DynamicProductCard/ReuseableSkelton";
+import TabSection from "./TabSection";
+import AddReviewModal from "../AllModals/AddReviewModal";
 
 // Mock product data
 const product = {
@@ -72,42 +63,17 @@ const product = {
   ],
 };
 
-// Mock related products
-const relatedProducts = [
-  {
-    id: 2,
-    name: "Wireless Earbuds",
-    price: 129.99,
-    image: "/cloths.jpg",
-  },
-  {
-    id: 3,
-    name: "Bluetooth Speaker",
-    price: 79.99,
-    image: "/cloths.jpg",
-  },
-  {
-    id: 4,
-    name: "Noise-Cancelling Headphones",
-    price: 249.99,
-    image: "/cloths.jpg",
-  },
-  {
-    id: 5,
-    name: "Gaming Headset",
-    price: 159.99,
-    image: "/cloths.jpg",
-  },
-];
-
-export default function ProductDetailPage() {
-  const [quantity, setQuantity] = useState(1);
-  const [newReview, setNewReview] = useState({
-    author: "",
-    rating: 5,
-    comment: "",
-  });
+export default function ProductDetailPage({ id }) {
+  const { data: ProductDetail, isLoading: isProdLoading } =
+    useGetMainProductDataQuery({
+      productId: id,
+    });
+  const productData = ProductDetail?.products[0];
+  const RelatedProducts = ProductDetail?.relatedProducts || [];
+  console.log("prod data", ProductDetail);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
   const [selectedSize, setSelectedSize] = useState(null);
 
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
@@ -122,7 +88,6 @@ export default function ProductDetailPage() {
     console.log(
       `Added ${quantity} ${product.name}(s) to cart, size: ${selectedSize}`
     );
-    // Implement actual add to cart logic here
   };
 
   const handleReviewSubmit = (e) => {
@@ -140,151 +105,243 @@ export default function ProductDetailPage() {
         {/* Breadcrumb */}
         <nav className="flex mb-8 text-sm">
           <Link href="/" className="text-gray-500 hover:text-gray-700">
-            Home
+            {isProdLoading ? (
+              <ReuseableSkelton width={"80px"} height={"20px"} />
+            ) : (
+              "Home"
+            )}
           </Link>
           <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />
           <Link href="/category" className="text-gray-500 hover:text-gray-700">
-            Electronics
+            {isProdLoading ? (
+              <ReuseableSkelton width={"80px"} height={"20px"} />
+            ) : (
+              productData?.sub_category
+            )}
           </Link>
           <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />
-          <span className="text-gray-900">{product.name}</span>
+          <span className="text-gray-900">
+            {isProdLoading ? (
+              <ReuseableSkelton width={"80px"} height={"20px"} />
+            ) : (
+              productData?.product_name
+            )}
+          </span>
         </nav>
 
         {/* Product Details */}
         <div className="grid md:grid-cols-2 gap-8 mb-16">
           {/* Product Image */}
           <div className="relative aspect-square">
-            <Image
-              src={product.image || "/placeholder.svg"}
-              alt={product.name}
-              fill
-              className="object-cover rounded-lg"
-            />
+            {isProdLoading ? (
+              <ReuseableSkelton width="100%" height="100%" />
+            ) : (
+              productData?.image_url?.[0] && (
+                <Image
+                  src={productData.image_url[0]}
+                  alt={productData.product_name || "Product Image"}
+                  fill
+                  layout=""
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 100vw"
+                  priority
+                  className="object-cover rounded-lg"
+                />
+              )
+            )}
           </div>
+
 
           {/* Product Info */}
           <div className="flex flex-col justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-              <p className="text-xl font-semibold mb-4">
-                ${product.price.toFixed(2)}
-              </p>
-              <div className="flex items-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < Math.floor(product.rating)
+              <h1 className="text-3xl font-bold mb-2">
+                {" "}
+                {isProdLoading ? (
+                  <ReuseableSkelton
+                    width={"200px"}
+                    height={"45px"}
+                    className="my-2"
+                  />
+                ) : (
+                  productData?.product_name
+                )}
+              </h1>
+              {isProdLoading ? (
+                <ReuseableSkelton
+                  width={"160px"}
+                  height={"25px"}
+                  className="my-2"
+                />
+              ) : (
+                <p className="text-xl font-semibold mb-4">
+                  ₹ {productData?.final_price.toFixed(2)}
+                  <span className="text-sm text-slate-900 line-through ml-2  ">
+                    ₹{productData?.price}
+                  </span>
+                  <span className="m-2 rounded-full bg-black px-2 text-center text-xs font-medium text-white">
+                    {productData?.discount}% OFF
+                  </span>
+                </p>
+              )}
+              {isProdLoading ? (
+                <ReuseableSkelton
+                  width={"140px"}
+                  height={"25px"}
+                  className="my-2"
+                />
+              ) : (
+                <div className="flex items-center mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-5 w-5 ${i < Math.floor(product?.rating)
                         ? "text-yellow-400 fill-yellow-400"
                         : "text-gray-300"
-                    }`}
-                  />
-                ))}
-                <span className="ml-2 text-gray-600">({product.rating})</span>
-              </div>
-              <p className="text-gray-600 mb-6">{product.description}</p>
-              <div className="mb-6">
-                <h3 className="text-sm font-medium mb-2">Select Size</h3>
-                <div className="flex flex-wrap gap-2">
-                  {["S", "M", "L", "XL", "XXL"].map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors
-                      ${
-                        selectedSize === size
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                      }`}
-                    >
-                      {size}
-                    </button>
+                        }`}
+                    />
                   ))}
+                  <span className="ml-2 text-gray-600">(4)</span>
+                </div>
+              )}
+              {isProdLoading ? (
+                <ReuseableSkelton
+                  width={"140px"}
+                  height={"25px"}
+                  className="my-2"
+                />
+              ) : (
+                <p className="text-gray-600 mb-6">{productData?.description}</p>
+              )}
+
+              <div className="mb-6">
+                <h3 className="text-sm font-medium mb-2">
+                  {productData ? "Select Size" : ""}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {isProdLoading
+                    ? [...Array(3)].map((_, idx) => (
+                      <ReuseableSkelton
+                        key={idx}
+                        width="40px"
+                        height="40px"
+                        className="rounded-full"
+                      />
+                    ))
+                    : productData?.sizes.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors
+            ${selectedSize === size
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                          }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                </div>
+              </div>
+              {/* colors section */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium mb-2">
+                  {productData ? "Select Color" : ""}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {isProdLoading
+                    ? [...Array(3)].map((_, idx) => (
+                      <ReuseableSkelton
+                        key={idx}
+                        width="40px"
+                        height="40px"
+                        className="rounded-full"
+                      />
+                    ))
+                    : productData?.colors.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedSize(color)}
+                        className={`p-2 rounded-full flex items-center justify-center text-sm font-medium transition-colors
+            ${selectedSize === color
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                          }`}
+                      >
+                        {color}
+                      </button>
+                    ))}
                 </div>
               </div>
             </div>
 
             {/* Add to Cart */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center border rounded-md">
-                <Button variant="ghost" size="icon" onClick={decrementQuantity}>
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="px-4">{quantity}</span>
-                <Button variant="ghost" size="icon" onClick={incrementQuantity}>
-                  <Plus className="h-4 w-4" />
+            {isProdLoading ? (
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center border rounded-md px-2 py-2 gap-2">
+                  <ReuseableSkelton
+                    width="32px"
+                    height="32px"
+                    className="rounded"
+                  />
+                  <ReuseableSkelton
+                    width="32px"
+                    height="20px"
+                    className="rounded"
+                  />
+                  <ReuseableSkelton
+                    width="32px"
+                    height="32px"
+                    className="rounded"
+                  />
+                </div>
+                <ReuseableSkelton
+                  width="100%"
+                  height="40px"
+                  className="rounded-md"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center border rounded-md">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={decrementQuantity}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="px-4">{quantity}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={incrementQuantity}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button onClick={addToCart} className="flex-1">
+                  <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
                 </Button>
               </div>
-              <Button onClick={addToCart} className="flex-1">
-                <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-              </Button>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Reviews Section */}
+        {/* Tabs for Description and Specifications*/}
+        {isProdLoading ? (
+          <div className="flex items-center space-x-4">
+            <ReuseableSkelton width="100px" height="32px" className="rounded" />
+            <ReuseableSkelton width="100px" height="32px" className="rounded" />
+          </div>
+        ) : (
+          productData && <TabSection productData={productData} />
+        )}
+
+        {/* Product Reviews Section */}
         <div className="mb-16">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Customer Reviews</h2>
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-              <DialogTrigger asChild>
-                <Button>Add Review</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Add Your Review</DialogTitle>
-                  <DialogDescription>
-                    Share your thoughts about the {product.name}.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleReviewSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      value={newReview.author}
-                      onChange={(e) =>
-                        setNewReview({ ...newReview, author: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="rating">Rating</Label>
-                    <select
-                      id="rating"
-                      value={newReview.rating}
-                      onChange={(e) =>
-                        setNewReview({
-                          ...newReview,
-                          rating: Number.parseInt(e.target.value),
-                        })
-                      }
-                      className="w-full border rounded-md p-2"
-                      required
-                    >
-                      {[5, 4, 3, 2, 1].map((rating) => (
-                        <option key={rating} value={rating}>
-                          {rating} Star{rating !== 1 ? "s" : ""}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="comment">Review</Label>
-                    <Textarea
-                      id="comment"
-                      value={newReview.comment}
-                      onChange={(e) =>
-                        setNewReview({ ...newReview, comment: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-                  <Button type="submit">Submit Review</Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <AddReviewModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} productId={productData?.product_id} productName={productData?.product_name} />
           </div>
           <div className="space-y-6">
             {product.reviews.map((review) => (
@@ -294,11 +351,10 @@ export default function ProductDetailPage() {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-4 w-4 ${
-                          i < review.rating
-                            ? "text-yellow-400 fill-yellow-400"
-                            : "text-gray-300"
-                        }`}
+                        className={`h-4 w-4 ${i < review.rating
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-300"
+                          }`}
                       />
                     ))}
                   </div>
@@ -310,57 +366,49 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Tabs for Description, Specifications, and Reviews */}
-        <Tabs defaultValue="description" className="mb-16">
-          <TabsList>
-            <TabsTrigger value="description">Description</TabsTrigger>
-            <TabsTrigger value="specifications">Specifications</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
-          </TabsList>
-          <TabsContent value="description" className="mt-4">
-            <p className="text-gray-600">{product.description}</p>
-          </TabsContent>
-          <TabsContent value="specifications" className="mt-4">
-            <table className="w-full text-left">
-              <tbody>
-                {product.specifications.map((spec, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-2 font-medium">{spec.name}</td>
-                    <td className="py-2 text-gray-600">{spec.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </TabsContent>
-          <TabsContent value="reviews" className="mt-4">
-            {/*This content is now in the new review section above*/}
-          </TabsContent>
-        </Tabs>
-
         {/* Related Products */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+        {isProdLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {relatedProducts.map((relatedProduct) => (
-              <div key={relatedProduct.id} className="group">
-                <div className="relative aspect-square mb-2 overflow-hidden rounded-lg">
-                  <Image
-                    src={relatedProduct.image || "/placeholder.svg"}
-                    alt={relatedProduct.name}
-                    fill
-                    className="object-cover transition-transform group-hover:scale-105"
-                  />
-                </div>
-                <h3 className="font-medium text-sm mb-1">
-                  {relatedProduct.name}
-                </h3>
-                <p className="text-gray-600">
-                  ${relatedProduct.price.toFixed(2)}
-                </p>
-              </div>
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <ReuseableSkelton
+                key={idx}
+                width="100%"
+                height="350px"
+                className="rounded-lg"
+              />
             ))}
           </div>
-        </div>
+        ) : (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {RelatedProducts.map((relatedProduct, index) => (
+                <div key={relatedProduct.id || index} className="group">
+                  <Link href={`/product-detail/${relatedProduct.product_id}`}>
+                    <div className="relative aspect-square mb-2 overflow-hidden rounded-lg">
+                      <Image
+                        src={
+                          relatedProduct?.image_url?.[0] || "/placeholder.svg"
+                        }
+                        alt={relatedProduct?.name || "Related product image"}
+                        fill
+                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                        className="object-cover transition-transform group-hover:scale-105"
+                      />
+                    </div>
+
+                    <h3 className="font-medium text-sm mb-1">
+                      {relatedProduct.name}
+                    </h3>
+                    <p className="text-gray-600">
+                      ₹{relatedProduct.final_price}
+                    </p>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>{" "}
     </HomeLayout>
   );
