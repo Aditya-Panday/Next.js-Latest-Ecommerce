@@ -69,6 +69,7 @@ export async function GET(req) {
         const total = countResult[0]?.total || 0;
         const totalPages = Math.ceil(total / limit);
         let relatedProducts = [];
+        let productReview = [];
 
         if (id) {
             const [productRes] = await db.query(`SELECT sub_category FROM products WHERE product_id = ? `, [id]);
@@ -77,11 +78,16 @@ export async function GET(req) {
 
             if (subCategory) {
                 const [relatedRes] = await db.query(
-                    `SELECT * FROM products WHERE sub_category = ? LIMIT 4`,
+                    `SELECT * FROM products WHERE sub_category = ? AND product_id != ? LIMIT 4`,
                     [subCategory, id]
                 );
                 relatedProducts = relatedRes;
             }
+            const [reviewRes] = await db.query(
+                `SELECT * FROM product_reviews WHERE product_id = ?`,
+                [id]
+            );
+            productReview = reviewRes;
         }
 
         return NextResponse.json({
@@ -93,7 +99,7 @@ export async function GET(req) {
                 limit,
                 totalPages,
             },
-            ...(id && { relatedProducts }) // 👈 only include if `id` is truthy
+            ...(id && { relatedProducts, productReview }), // 👈 only include if `id` is truthy
         }, { status: 200 });
     } catch (error) {
         console.error("Database Error:", error);

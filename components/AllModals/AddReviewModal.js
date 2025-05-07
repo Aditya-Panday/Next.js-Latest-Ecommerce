@@ -18,36 +18,45 @@ const AddReviewModal = ({ isModalOpen, setIsModalOpen, productId, productName })
         author: "",
         rating: 5,
         comment: "",
+        errorMsg: "",
+        successMsg: ""
     });
-    const [errorMsg, setErrorMsg] = useState("");
-    const [successMsg, setSuccessMsg] = useState("");
 
     const [addReview, { isLoading }] = useAddReviewMutation();
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
-        setErrorMsg("");
-        setSuccessMsg("");
+        setNewReview((prev) => ({ ...prev, errorMsg: "", successMsg: "" }));
 
         try {
             const payload = {
                 productId,
                 stars: newReview.rating,
                 description: newReview.comment,
-                author: newReview.author, // Include if your API supports it
+                name: newReview.author,
             };
+
             await addReview(payload).unwrap();
-            setSuccessMsg("Review added successfully!");
-            setNewReview({ author: "", rating: 5, comment: "" });
+
+            setNewReview({
+                author: "",
+                rating: 5,
+                comment: "",
+                errorMsg: "",
+                successMsg: "Review added successfully!"
+            });
 
             setTimeout(() => {
-                setSuccessMsg("");
+                setNewReview((prev) => ({ ...prev, successMsg: "" }));
                 setIsModalOpen(false);
             }, 1500);
         } catch (err) {
-            const errMsg = err?.data?.message || "Failed to add review.";
-            setErrorMsg(errMsg);
-            setTimeout(() => setErrorMsg(""), 2000);
+            const errMsg = err?.data?.error || "Failed to add review.";
+            setNewReview((prev) => ({ ...prev, errorMsg: errMsg }));
+
+            setTimeout(() => {
+                setNewReview((prev) => ({ ...prev, errorMsg: "" }));
+            }, 2500);
         }
     };
 
@@ -108,8 +117,8 @@ const AddReviewModal = ({ isModalOpen, setIsModalOpen, productId, productName })
                         />
                     </div>
 
-                    {errorMsg && <p className="text-red-600 text-sm">{errorMsg}</p>}
-                    {successMsg && <p className="text-green-600 text-sm">{successMsg}</p>}
+                    {newReview.errorMsg && <p className="text-red-600 text-sm">{newReview.errorMsg}</p>}
+                    {newReview.successMsg && <p className="text-green-600 text-sm">{newReview.successMsg}</p>}
 
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? "Submitting..." : "Submit Review"}

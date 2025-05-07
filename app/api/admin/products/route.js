@@ -31,7 +31,7 @@ export async function POST(req) {
     if (result[0].count !== 0) {
       return NextResponse.json({
         message: "This product name already exists.",
-        status: 404,
+        status: 409,
       });
     }
 

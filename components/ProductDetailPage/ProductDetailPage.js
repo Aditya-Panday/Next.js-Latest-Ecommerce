@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, Minus, Plus, ShoppingCart, ChevronRight } from "lucide-react";
@@ -9,6 +9,7 @@ import { useGetMainProductDataQuery } from "@/lib/features/productApi/productMai
 import ReuseableSkelton from "../DynamicProductCard/ReuseableSkelton";
 import TabSection from "./TabSection";
 import AddReviewModal from "../AllModals/AddReviewModal";
+import ProductSkeltonPage from "./ProductSkeltonPage";
 
 // Mock product data
 const product = {
@@ -70,13 +71,13 @@ export default function ProductDetailPage({ id }) {
     });
   const productData = ProductDetail?.products[0];
   const RelatedProducts = ProductDetail?.relatedProducts || [];
-  console.log("prod data", ProductDetail);
+  const productReviews = ProductDetail?.productReview || [];
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
-
+  const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
 
-  const incrementQuantity = () => setQuantity((prev) => prev + 1);
+  const incrementQuantity = () => setQuantity((prev) => (prev < 6 ? prev - 1 : 1));;
   const decrementQuantity = () =>
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
@@ -90,242 +91,161 @@ export default function ProductDetailPage({ id }) {
     );
   };
 
-  const handleReviewSubmit = (e) => {
-    e.preventDefault();
-    console.log("New review:", newReview);
-    // Here you would typically send this data to your backend
-    // and then update the product.reviews array with the new review
-    setIsModalOpen(false);
-    setNewReview({ author: "", rating: 5, comment: "" }); // Reset form
-  };
+  useEffect(() => {
+    if (productData?.sizes?.length > 0) {
+      setSelectedSize(productData.sizes[0]);
+    }
+    if (productData?.colors?.length > 0) {
+      setSelectedColor(productData.colors[0]);
+    }
+  }, [productData]);
 
   return (
     <HomeLayout>
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <nav className="flex mb-8 text-sm">
-          <Link href="/" className="text-gray-500 hover:text-gray-700">
-            {isProdLoading ? (
-              <ReuseableSkelton width={"80px"} height={"20px"} />
-            ) : (
-              "Home"
-            )}
-          </Link>
-          <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />
-          <Link href="/category" className="text-gray-500 hover:text-gray-700">
-            {isProdLoading ? (
-              <ReuseableSkelton width={"80px"} height={"20px"} />
-            ) : (
-              productData?.sub_category
-            )}
-          </Link>
-          <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />
-          <span className="text-gray-900">
-            {isProdLoading ? (
-              <ReuseableSkelton width={"80px"} height={"20px"} />
-            ) : (
-              productData?.product_name
-            )}
-          </span>
-        </nav>
+        {isProdLoading ? (
+          <ProductSkeltonPage />
+        ) : (
+          <>
+            {/* Breadcrumb */}
+            <nav className="flex mb-8 text-sm">
+              <Link
+                href="/"
+                className="text-gray-500 hover:text-gray-700 cursor-pointer"
+              >
+                Home
+              </Link>
+              <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />
+              <Link
+                href="/category"
+                className="text-gray-500 hover:text-gray-700 cursor-pointer"
+              >
+                {/* {productData?.sub_category} */}
+              </Link>
+              <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />
+              <span className="text-gray-900">{productData?.product_name}</span>
+            </nav>
 
-        {/* Product Details */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          {/* Product Image */}
-          <div className="relative aspect-square">
-            {isProdLoading ? (
-              <ReuseableSkelton width="100%" height="100%" />
-            ) : (
-              productData?.image_url?.[0] && (
-                <Image
-                  src={productData.image_url[0]}
-                  alt={productData.product_name || "Product Image"}
-                  fill
-                  layout=""
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 100vw"
-                  priority
-                  className="object-cover rounded-lg"
-                />
-              )
-            )}
-          </div>
-
-
-          {/* Product Info */}
-          <div className="flex flex-col justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">
-                {" "}
-                {isProdLoading ? (
-                  <ReuseableSkelton
-                    width={"200px"}
-                    height={"45px"}
-                    className="my-2"
+            {/* Product Details */}
+            <div className="grid md:grid-cols-2 gap-8 mb-16">
+              {/* Product Image */}
+              <div className="relative aspect-square">
+                {productData?.image_url?.[0] && (
+                  <Image
+                    src={productData.image_url[0]}
+                    alt={productData.product_name || "Product Image"}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 100vw"
+                    priority
+                    className="object-cover rounded-lg"
                   />
-                ) : (
-                  productData?.product_name
                 )}
-              </h1>
-              {isProdLoading ? (
-                <ReuseableSkelton
-                  width={"160px"}
-                  height={"25px"}
-                  className="my-2"
-                />
-              ) : (
-                <p className="text-xl font-semibold mb-4">
-                  ₹ {productData?.final_price.toFixed(2)}
-                  <span className="text-sm text-slate-900 line-through ml-2  ">
-                    ₹{productData?.price}
-                  </span>
-                  <span className="m-2 rounded-full bg-black px-2 text-center text-xs font-medium text-white">
-                    {productData?.discount}% OFF
-                  </span>
-                </p>
-              )}
-              {isProdLoading ? (
-                <ReuseableSkelton
-                  width={"140px"}
-                  height={"25px"}
-                  className="my-2"
-                />
-              ) : (
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-5 w-5 ${i < Math.floor(product?.rating)
-                        ? "text-yellow-400 fill-yellow-400"
-                        : "text-gray-300"
-                        }`}
-                    />
-                  ))}
-                  <span className="ml-2 text-gray-600">(4)</span>
-                </div>
-              )}
-              {isProdLoading ? (
-                <ReuseableSkelton
-                  width={"140px"}
-                  height={"25px"}
-                  className="my-2"
-                />
-              ) : (
-                <p className="text-gray-600 mb-6">{productData?.description}</p>
-              )}
-
-              <div className="mb-6">
-                <h3 className="text-sm font-medium mb-2">
-                  {productData ? "Select Size" : ""}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {isProdLoading
-                    ? [...Array(3)].map((_, idx) => (
-                      <ReuseableSkelton
-                        key={idx}
-                        width="40px"
-                        height="40px"
-                        className="rounded-full"
-                      />
-                    ))
-                    : productData?.sizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors
-            ${selectedSize === size
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                          }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                </div>
               </div>
-              {/* colors section */}
-              <div className="mb-6">
-                <h3 className="text-sm font-medium mb-2">
-                  {productData ? "Select Color" : ""}
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {isProdLoading
-                    ? [...Array(3)].map((_, idx) => (
-                      <ReuseableSkelton
-                        key={idx}
-                        width="40px"
-                        height="40px"
-                        className="rounded-full"
+
+              {/* Product Info */}
+              <div className="flex flex-col justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">
+                    {productData?.product_name}
+                  </h1>
+
+                  <p className="text-xl font-semibold mb-4">
+                    ₹ {productData?.final_price.toFixed(2)}
+                    <span className="text-sm text-slate-900 line-through ml-2">
+                      ₹{productData?.price}
+                    </span>
+                    <span className="m-2 rounded-full bg-black px-2 text-center text-xs font-medium text-white">
+                      {productData?.discount}% OFF
+                    </span>
+                  </p>
+
+                  <div className="flex items-center mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-5 w-5 ${
+                          i < Math.floor(product?.rating)
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300"
+                        }`}
                       />
-                    ))
-                    : productData?.colors.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedSize(color)}
-                        className={`p-2 rounded-full flex items-center justify-center text-sm font-medium transition-colors
-            ${selectedSize === color
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                          }`}
-                      >
-                        {color}
-                      </button>
                     ))}
+                    <span className="ml-2 text-gray-600">(4)</span>
+                  </div>
+
+                  <p className="text-gray-600 mb-6">
+                    {productData?.description}
+                  </p>
+
+                  {/* Sizes */}
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium mb-2">Select Size</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {productData?.sizes.map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setSelectedSize(size)}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                            selectedSize === size
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Colors */}
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium mb-2">Select Color</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {productData?.colors.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => setSelectedColor(color)}
+                          className={`p-2 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                            selectedColor === color
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                          }`}
+                        >
+                          {color}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Add to Cart */}
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center border rounded-md">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={decrementQuantity}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="px-4">{quantity}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={incrementQuantity}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button onClick={addToCart} className="flex-1">
+                    <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+                  </Button>
                 </div>
               </div>
             </div>
-
-            {/* Add to Cart */}
-            {isProdLoading ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center border rounded-md px-2 py-2 gap-2">
-                  <ReuseableSkelton
-                    width="32px"
-                    height="32px"
-                    className="rounded"
-                  />
-                  <ReuseableSkelton
-                    width="32px"
-                    height="20px"
-                    className="rounded"
-                  />
-                  <ReuseableSkelton
-                    width="32px"
-                    height="32px"
-                    className="rounded"
-                  />
-                </div>
-                <ReuseableSkelton
-                  width="100%"
-                  height="40px"
-                  className="rounded-md"
-                />
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center border rounded-md">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={decrementQuantity}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="px-4">{quantity}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={incrementQuantity}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button onClick={addToCart} className="flex-1">
-                  <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
+          </>
+        )}
 
         {/* Tabs for Description and Specifications*/}
         {isProdLoading ? (
@@ -341,7 +261,12 @@ export default function ProductDetailPage({ id }) {
         <div className="mb-16">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Customer Reviews</h2>
-            <AddReviewModal isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} productId={productData?.product_id} productName={productData?.product_name} />
+            <AddReviewModal
+              isModalOpen={isModalOpen}
+              setIsModalOpen={setIsModalOpen}
+              productId={productData?.product_id}
+              productName={productData?.product_name}
+            />
           </div>
           <div className="space-y-6">
             {product.reviews.map((review) => (
@@ -351,10 +276,11 @@ export default function ProductDetailPage({ id }) {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-4 w-4 ${i < review.rating
-                          ? "text-yellow-400 fill-yellow-400"
-                          : "text-gray-300"
-                          }`}
+                        className={`h-4 w-4 ${
+                          i < review.rating
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300"
+                        }`}
                       />
                     ))}
                   </div>
@@ -380,7 +306,9 @@ export default function ProductDetailPage({ id }) {
           </div>
         ) : (
           <div>
-            <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+            {RelatedProducts.length>0 && (
+              <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+            )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {RelatedProducts.map((relatedProduct, index) => (
                 <div key={relatedProduct.id || index} className="group">
