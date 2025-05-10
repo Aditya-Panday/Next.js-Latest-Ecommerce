@@ -33,7 +33,7 @@ export default function Home() {
               <p className="text-xl text-gray-600">
                 Discover our latest arrivals and trending styles
               </p>
-              <button className="bg-red-500 text-white px-4 py-2 rounded-lg">
+              <button className="bg-red-500 text-white px-4 py-2 rounded-lg" name="shop now">
                 Shop Now
               </button>
             </div>

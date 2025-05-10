@@ -221,6 +221,7 @@ export default function CheckoutPage() {
                   size="sm"
                   onClick={() => setShowCartItems(!showCartItems)}
                   className="h-8 w-8 p-0"
+                  name="view cart"
                 >
                   {showCartItems ? (
                     <ChevronUp className="h-4 w-4" />
@@ -268,6 +269,7 @@ export default function CheckoutPage() {
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0"
+                            name="remove"
                           >
                             <Trash2 className="h-4 w-4" />
                             <span className="sr-only">Remove</span>
@@ -332,7 +334,7 @@ export default function CheckoutPage() {
 
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="mt-4 w-full">
+                    <Button variant="outline" className="mt-4 w-full" name="add address" >
                       <Plus className="mr-2 h-4 w-4" /> Add New Address
                     </Button>
                   </DialogTrigger>
@@ -395,7 +397,7 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button type="submit">Save Address</Button>
+                        <Button type="submit" name="save-address">Save Address</Button>
                       </DialogFooter>
                     </form>
                   </DialogContent>
@@ -510,6 +512,7 @@ export default function CheckoutPage() {
                   className="w-full"
                   size="lg"
                   onClick={handleCompleteCheckout}
+                  name="complete checkout"
                 >
                   Complete Checkout
                 </Button>

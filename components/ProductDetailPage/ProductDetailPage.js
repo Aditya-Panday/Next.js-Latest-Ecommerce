@@ -76,8 +76,9 @@ export default function ProductDetailPage({ id }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
-
-  const incrementQuantity = () => setQuantity((prev) => (prev < 6 ? prev - 1 : 1));;
+  console.log("productReviews", productReviews);
+  const incrementQuantity = () =>
+    setQuantity((prev) => (prev < 6 ? prev - 1 : 1));
   const decrementQuantity = () =>
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
@@ -152,12 +153,16 @@ export default function ProductDetailPage({ id }) {
 
                   <p className="text-xl font-semibold mb-4">
                     ₹ {productData?.final_price.toFixed(2)}
-                    <span className="text-sm text-slate-900 line-through ml-2">
-                      ₹{productData?.price}
-                    </span>
-                    <span className="m-2 rounded-full bg-black px-2 text-center text-xs font-medium text-white">
-                      {productData?.discount}% OFF
-                    </span>
+                    {productData?.discount > 0 && (
+                      <>
+                        <span className="text-sm text-slate-900 line-through ml-2">
+                          ₹{productData?.price}
+                        </span>
+                        <span className="m-2 rounded-full bg-black px-2 text-center text-xs font-medium text-white">
+                          {productData.discount}% OFF
+                        </span>
+                      </>
+                    )}
                   </p>
 
                   <div className="flex items-center mb-4">
@@ -260,35 +265,64 @@ export default function ProductDetailPage({ id }) {
         {/* Product Reviews Section */}
         <div className="mb-16">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Customer Reviews</h2>
-            <AddReviewModal
-              isModalOpen={isModalOpen}
-              setIsModalOpen={setIsModalOpen}
-              productId={productData?.product_id}
-              productName={productData?.product_name}
-            />
+            <h2 className="text-2xl font-bold">
+              {isProdLoading ? (
+                <ReuseableSkelton
+                  width="150px"
+                  height="45px"
+                  className="rounded-lg my-4"
+                />
+              ) : (
+                "Customer Reviews"
+              )}
+            </h2>
+            {!isProdLoading && (
+              <AddReviewModal
+                isModalOpen={isModalOpen}
+                setIsModalOpen={setIsModalOpen}
+                productId={productData?.product_id}
+                productName={productData?.product_name}
+              />
+            )}
           </div>
           <div className="space-y-6">
-            {product.reviews.map((review) => (
-              <div key={review.id} className="border-b pb-4">
-                <div className="flex items-center mb-2">
-                  <div className="flex mr-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-4 w-4 ${
-                          i < review.rating
-                            ? "text-yellow-400 fill-yellow-400"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    ))}
+            {isProdLoading ? (
+              // Show skeletons while loading
+              [...Array(3)].map((_, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <ReuseableSkelton width="80px" height="16px" />
+                    <ReuseableSkelton width="120px" height="16px" />
                   </div>
-                  <span className="font-medium">{review.author}</span>
+                  <ReuseableSkelton width="100%" height="40px" />
                 </div>
-                <p className="text-gray-600">{review.comment}</p>
-              </div>
-            ))}
+              ))
+            ) : productReviews.length > 0 ? (
+              // Show actual reviews after loading
+              productReviews.map((review) => (
+                <div key={review.id} className="border-b pb-4">
+                  <div className="flex items-center mb-2">
+                    <div className="flex mr-2">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < review.stars
+                              ? "text-yellow-400 fill-yellow-400"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="font-medium">{review.name}</span>
+                  </div>
+                  <p className="text-gray-600">{review.description}</p>
+                </div>
+              ))
+            ) : (
+              // Fallback if no reviews
+              <p>No review found</p>
+            )}
           </div>
         </div>
 
@@ -306,7 +340,7 @@ export default function ProductDetailPage({ id }) {
           </div>
         ) : (
           <div>
-            {RelatedProducts.length>0 && (
+            {RelatedProducts.length > 0 && (
               <h2 className="text-2xl font-bold mb-6">Related Products</h2>
             )}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
