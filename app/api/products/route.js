@@ -2,114 +2,123 @@ import db from "@/utils/db";
 import { NextResponse } from "next/server";
 
 export async function GET(req) {
-    const url = new URL(req.url);
-    const searchParams = url.searchParams;
+  const url = new URL(req.url);
+  const searchParams = url.searchParams;
 
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "10", 10);
-    const offset = (page - 1) * limit;
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const offset = (page - 1) * limit;
 
-    const id = searchParams.get("productId"); // e.g. "#23".
-    const categoryParam = searchParams.get("category"); // e.g. "male,female".
-    const brandParam = searchParams.get("brand");       // e.g. "Nike,Adidas".
-    const subParam = searchParams.get("sub"); // sort by subCategory. 
-    const sortParam = searchParams.get("sort"); // sort by price.
-    // const searchParam = searchParams.get("search"); // Search by product name.
-    const filters = [];
-    const values = [];
+  const id = searchParams.get("productId"); // e.g. "#23".
+  const categoryParam = searchParams.get("category"); // e.g. "male,female".
+  const brandParam = searchParams.get("brand"); // e.g. "Nike,Adidas".
+  const subParam = searchParams.get("sub"); // sort by subCategory.
+  const sortParam = searchParams.get("sort"); // sort by price.
+  // const searchParam = searchParams.get("search"); // Search by product name.
+  const filters = [];
+  const values = [];
 
-    // Uses IN (?) clauses for flexible filtering.
-    // Category filter (IN clause)
-    if (categoryParam) {
-        const categories = categoryParam.split(",");
-        filters.push(`category_name  IN (${categories.map(() => "?").join(",")})`);
-        values.push(...categories);
-    }
-    // Sub-Category filter (IN clause)
-    if (subParam) {
-        const sub_cat = subParam.split(",");
-        filters.push(`sub_category IN (${sub_cat.map(() => "?").join(",")})`);
-        values.push(...sub_cat);
-    }
-    // Brand filter (IN clause)
-    if (brandParam) {
-        const brands = brandParam.split(",");
-        filters.push(`brand_name IN (${brands.map(() => "?").join(",")})`);
-        values.push(...brands);
-    }
+  // Uses IN (?) clauses for flexible filtering.
+  // Category filter (IN clause)
+  if (categoryParam) {
+    const categories = categoryParam.split(",");
+    filters.push(`category_name  IN (${categories.map(() => "?").join(",")})`);
+    values.push(...categories);
+  }
+  // Sub-Category filter (IN clause)
+  if (subParam) {
+    const sub_cat = subParam.split(",");
+    filters.push(`sub_category IN (${sub_cat.map(() => "?").join(",")})`);
+    values.push(...sub_cat);
+  }
+  // Brand filter (IN clause)
+  if (brandParam) {
+    const brands = brandParam.split(",");
+    filters.push(`brand_name IN (${brands.map(() => "?").join(",")})`);
+    values.push(...brands);
+  }
+  if (id) {
+    filters.push(`product_id = ?`);
+    values.push(id);
+  }
+
+  console.log("filter", filters);
+  console.log("values", values);
+
+  const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+  console.log("whereclause", whereClause);
+  // Default sort by product_id desc
+  let orderByClause = "ORDER BY product_id DESC";
+
+  if (sortParam === "price_asc") {
+    orderByClause = "ORDER BY price ASC";
+  } else if (sortParam === "price_desc") {
+    orderByClause = "ORDER BY price DESC";
+  }
+
+  try {
+    // Fetch paginated products
+    const dataQuery = `SELECT * FROM products ${whereClause} ${orderByClause} LIMIT ? OFFSET ?`;
+    console.log("query", dataQuery);
+    const dataParams = [...values, limit, offset];
+    const [products] = await db.query(dataQuery, dataParams);
+
+    // Get total count for pagination
+    const countQuery = `SELECT COUNT(*) as total FROM products ${whereClause}`;
+    const [countResult] = await db.query(countQuery, values);
+    const total = countResult[0]?.total || 0;
+    const totalPages = Math.ceil(total / limit);
+    let relatedProducts = [];
+    let productReview = [];
+
     if (id) {
-        filters.push(`product_id = ?`);
-        values.push(id);
+      const [productRes] = await db.query(
+        `SELECT sub_category, category_name FROM products WHERE product_id = ? `,
+        [id]
+      );
+      console.log("produsctres", productRes);
+      const subCategory = productRes[0]?.sub_category;
+      const categoryName = productRes[0]?.category_name;
+
+      if (subCategory) {
+        const [relatedRes] = await db.query(
+          `SELECT * FROM products WHERE (sub_category = ? AND category_name = ?) AND product_id != ?  LIMIT 4`,
+          [subCategory, categoryName, id]
+        );
+        relatedProducts = relatedRes;
+      }
+      const [reviewRes] = await db.query(
+        `SELECT * FROM product_reviews WHERE product_id = ?`,
+        [id]
+      );
+      productReview = reviewRes;
     }
 
-    console.log("filter", filters)
-    console.log("values", values)
-
-    const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
-    console.log("whereclause", whereClause)
-    // Default sort by product_id desc
-    let orderByClause = "ORDER BY product_id DESC";
-
-    if (sortParam === "price_asc") {
-        orderByClause = "ORDER BY price ASC";
-    } else if (sortParam === "price_desc") {
-        orderByClause = "ORDER BY price DESC";
-    }
-
-    try {
-        // Fetch paginated products
-        const dataQuery = `SELECT * FROM products ${whereClause} ${orderByClause} LIMIT ? OFFSET ?`;
-        console.log("query", dataQuery)
-        const dataParams = [...values, limit, offset];
-        const [products] = await db.query(dataQuery, dataParams);
-
-        // Get total count for pagination
-        const countQuery = `SELECT COUNT(*) as total FROM products ${whereClause}`;
-        const [countResult] = await db.query(countQuery, values);
-        const total = countResult[0]?.total || 0;
-        const totalPages = Math.ceil(total / limit);
-        let relatedProducts = [];
-        let productReview = [];
-
-        if (id) {
-            const [productRes] = await db.query(`SELECT sub_category FROM products WHERE product_id = ? `, [id]);
-            console.log("produsctres", productRes)
-            const subCategory = productRes[0]?.sub_category;
-
-            if (subCategory) {
-                const [relatedRes] = await db.query(
-                    `SELECT * FROM products WHERE sub_category = ? AND product_id != ? LIMIT 4`,
-                    [subCategory, id]
-                );
-                relatedProducts = relatedRes;
-            }
-            const [reviewRes] = await db.query(
-                `SELECT * FROM product_reviews WHERE product_id = ?`,
-                [id]
-            );
-            productReview = reviewRes;
-        }
-
-        return NextResponse.json({
-            success: true,
-            products,
-            pagination: {
-                total,
-                page,
-                limit,
-                totalPages,
-            },
-            ...(id && { relatedProducts, productReview }), // 👈 only include if `id` is truthy
-        }, { status: 200 });
-    } catch (error) {
-        console.error("Database Error:", error);
-        return NextResponse.json({
-            success: false,
-            message: "An internal server error occurred.",
-        }, { status: 500 });
-    }
+    return NextResponse.json(
+      {
+        success: true,
+        products,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages,
+        },
+        ...(id && { relatedProducts, productReview }), // 👈 only include if `id` is truthy
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Database Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: "An internal server error occurred.",
+      },
+      { status: 500 }
+    );
+  }
 }
-
 
 // import db from "@/utils/db";
 // import { NextResponse } from "next/server";

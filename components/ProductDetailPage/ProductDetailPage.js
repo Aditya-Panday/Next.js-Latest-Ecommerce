@@ -77,8 +77,8 @@ export default function ProductDetailPage({ id }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   console.log("productReviews", productReviews);
-  const incrementQuantity = () =>
-    setQuantity((prev) => (prev < 6 ? prev - 1 : 1));
+    const incrementQuantity = () =>
+      setQuantity((prev) => (prev < 6 ? prev + 1 : 6));
   const decrementQuantity = () =>
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
@@ -122,7 +122,7 @@ export default function ProductDetailPage({ id }) {
                 href="/category"
                 className="text-gray-500 hover:text-gray-700 cursor-pointer"
               >
-                {/* {productData?.sub_category} */}
+                {productData?.sub_category}
               </Link>
               <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />
               <span className="text-gray-900">{productData?.product_name}</span>
@@ -147,7 +147,7 @@ export default function ProductDetailPage({ id }) {
               {/* Product Info */}
               <div className="flex flex-col justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">
+                  <h1 className="text-3xl font-bold mb-2 capitalize">
                     {productData?.product_name}
                   </h1>
 
