@@ -8,10 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Star, Search, SlidersHorizontal, X } from "lucide-react";
 import DynamicProductCard from "../DynamicProductCard/DynamicProductCard";
 import ProductCardSkeleton from "../DynamicProductCard/ProductCardSkelton";
+import ReuseableSkelton from "../DynamicProductCard/ReuseableSkelton";
 
-export default function CategoryPage({ productCollection, isProdLoading }) {
+export default function CategoryPage({
+  productCollection,
+  isProdLoading,
+  productFilters,
+  isFilterLoading,
+  filters,
+  handleCheckboxChange,
+}) {
+  // console.log("productFilters", productFilters);
+
   // State for filters
-  const [priceRange, setPriceRange] = useState([0, 1000]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
@@ -54,12 +63,6 @@ export default function CategoryPage({ productCollection, isProdLoading }) {
     },
   ];
   // Available brands and ratings for filters
-  const brands = Array.from(
-    new Set(productsData.map((product) => product.brand))
-  );
-  
-  const ratings = [5, 4, 3, 2, 1];
-  const genders = ["Mens", "Womens", "Kids"];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -102,75 +105,94 @@ export default function CategoryPage({ productCollection, isProdLoading }) {
                   Reset All
                 </Button>
               </div>
-
-
-              {/* Brand Filter */}
-              <div className="mb-6">
-                <h3 className="text-md font-medium mb-3">Brand</h3>
-                <div className="space-y-2">
-                  {brands.map((brand) => (
-                    <div key={brand} className="flex items-center">
-                      <Checkbox id={`brand`} />
-                      <label
-                        htmlFor={`brand-${brand}`}
-                        className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {brand}
-                      </label>
+              {isFilterLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <ReuseableSkelton
+                    key={i}
+                    width="170px"
+                    height="35px"
+                    className="rounded-lg my-4"
+                  />
+                ))
+              ) : (
+                <>
+                  {/* Brand Filter */}
+                  <div className="mb-6">
+                    <h3 className="text-md font-medium mb-3">Brands</h3>
+                    <div className="space-y-2">
+                      {productFilters?.brands?.map((brand) => (
+                        <div key={brand} className="flex items-center">
+                          <Checkbox
+                            id={`brand-${brand}`}
+                            checked={filters.brand.includes(brand)}
+                            onCheckedChange={() =>
+                              handleCheckboxChange("brand", brand)
+                            }
+                          />
+                          <label
+                            htmlFor={`brand-${brand}`}
+                            className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {brand}
+                          </label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              {/* Rating Filter */}
-              <div className="mb-6">
-                <h3 className="text-md font-medium mb-3">Rating</h3>
-                <div className="space-y-2">
-                  {ratings.map((rating) => (
-                    <div key={rating} className="flex items-center">
-                      <Checkbox id={`rating`} />
-                      <label
-                        htmlFor={`rating-${rating}`}
-                        className="ml-2 text-sm font-medium leading-none flex items-center"
-                      >
-                        {Array(rating)
-                          .fill(0)
-                          .map((_, i) => (
-                            <Star
-                              key={i}
-                              size={16}
-                              className="text-yellow-400 fill-yellow-400"
-                            />
-                          ))}
-                        {Array(5 - rating)
-                          .fill(0)
-                          .map((_, i) => (
-                            <Star key={i} size={16} className="text-gray-300" />
-                          ))}
-                        <span className="ml-1">& Up</span>
-                      </label>
+                  {/* Gender Filter */}
+                  <div className="mb-6">
+                    <h3 className="text-md font-medium mb-3">Gender</h3>
+                    <div className="space-y-2">
+                      {productFilters?.categories?.map((category, index) => (
+                        <div key={index} className="flex items-center">
+                          <Checkbox
+                            id={`category-${category}`}
+                            checked={filters.category.includes(category)}
+                            onCheckedChange={() =>
+                              handleCheckboxChange("category", category)
+                            }
+                          />{" "}
+                          <label
+                            htmlFor={`gender-${category}`}
+                            className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {category}
+                          </label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
 
-              {/* Gender Filter */}
-              <div className="mb-6">
-                <h3 className="text-md font-medium mb-3">Gender</h3>
-                <div className="space-y-2">
-                  {genders.map((gender) => (
-                    <div key={gender} className="flex items-center">
-                      <Checkbox id={`gender-`} />
-                      <label
-                        htmlFor={`gender-${gender}`}
-                        className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {gender}
-                      </label>
+                  {/* Category Filter */}
+                  <div className="mb-6">
+                    <h3 className="text-md font-medium mb-3">Category</h3>
+                    <div className="space-y-2">
+                      {productFilters?.subCategories?.map(
+                        (subCategory, index) => (
+                          <div key={index} className="flex items-center">
+                            <Checkbox
+                              id={`subcategory-${subCategory}`}
+                              checked={filters.subcategory.includes(
+                                subCategory
+                              )}
+                              onCheckedChange={() =>
+                                handleCheckboxChange("subcategory", subCategory)
+                              }
+                            />{" "}
+                            <label
+                              htmlFor={`category-${subCategory}`}
+                              className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {subCategory}
+                            </label>
+                          </div>
+                        )
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </aside>
@@ -193,13 +215,19 @@ export default function CategoryPage({ productCollection, isProdLoading }) {
 
               {/* Brand Filter */}
               <div className="mb-6">
-                <h3 className="text-md font-medium mb-3">Brand</h3>
+                <h3 className="text-md font-medium mb-3">Brands</h3>
                 <div className="space-y-2">
-                  {brands.map((brand) => (
+                  {productFilters?.brands?.map((brand) => (
                     <div key={brand} className="flex items-center">
-                      <Checkbox id={`mobile-brand`} />
+                      <Checkbox
+                        id={`brand-${brand}`}
+                        checked={filters.brand.includes(brand)}
+                        onCheckedChange={() =>
+                          handleCheckboxChange("brand", brand)
+                        }
+                      />
                       <label
-                        htmlFor={`mobile-brand-${brand}`}
+                        htmlFor={`brand-${brand}`}
                         className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
                         {brand}
@@ -208,51 +236,48 @@ export default function CategoryPage({ productCollection, isProdLoading }) {
                   ))}
                 </div>
               </div>
-
-              {/* Rating Filter */}
+              {/* Gender Filter */}
               <div className="mb-6">
-                <h3 className="text-md font-medium mb-3">Rating</h3>
+                <h3 className="text-md font-medium mb-3">Gender</h3>
                 <div className="space-y-2">
-                  {ratings.map((rating) => (
-                    <div key={rating} className="flex items-center">
-                      <Checkbox id={`mobile-rating`} />
+                  {productFilters?.categories?.map((category, index) => (
+                    <div key={index} className="flex items-center">
+                      <Checkbox
+                        id={`category-${category}`}
+                        checked={filters.category.includes(category)}
+                        onCheckedChange={() =>
+                          handleCheckboxChange("category", category)
+                        }
+                      />{" "}
                       <label
-                        htmlFor={`mobile-rating-${rating}`}
-                        className="ml-2 text-sm font-medium leading-none flex items-center"
+                        htmlFor={`gender-${category}`}
+                        className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        {Array(rating)
-                          .fill(0)
-                          .map((_, i) => (
-                            <Star
-                              key={i}
-                              size={16}
-                              className="text-yellow-400 fill-yellow-400"
-                            />
-                          ))}
-                        {Array(5 - rating)
-                          .fill(0)
-                          .map((_, i) => (
-                            <Star key={i} size={16} className="text-gray-300" />
-                          ))}
-                        <span className="ml-1">& Up</span>
+                        {category}
                       </label>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Gender Filter */}
+              {/* Category Filter */}
               <div className="mb-6">
-                <h3 className="text-md font-medium mb-3">Gender</h3>
+                <h3 className="text-md font-medium mb-3">Category</h3>
                 <div className="space-y-2">
-                  {genders.map((gender) => (
-                    <div key={gender} className="flex items-center">
-                      <Checkbox id={`mobile-gender`} />
+                  {productFilters?.subCategories?.map((subCategory, index) => (
+                    <div key={index} className="flex items-center">
+                      <Checkbox
+                        id={`subcategory-${subCategory}`}
+                        checked={filters.subcategory.includes(subCategory)}
+                        onCheckedChange={() =>
+                          handleCheckboxChange("subcategory", subCategory)
+                        }
+                      />
                       <label
-                        htmlFor={`mobile-gender`}
+                        htmlFor={`category-${subCategory}`}
                         className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
-                        {gender}
+                        {subCategory}
                       </label>
                     </div>
                   ))}
@@ -293,30 +318,17 @@ export default function CategoryPage({ productCollection, isProdLoading }) {
             </div>
           </div>
 
-          {/* Product grid */}
-          {/* {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array(8)
-                .fill(0)
-                .map((_, index) => (
-                  <ProductSkeleton key={index} />
-                ))}
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium mb-2">No products found</h3>
-              <p className="text-gray-500 mb-4">
-                Try adjusting your filters or search query
-              </p>
-              <Button onClick={resetFilters}>Reset Filters</Button>
-            </div>
-          ) : ( */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 xxl:grid-cols-4 gap-6">
             {isProdLoading
-              ? Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))
               : productCollection?.products?.map((product) => (
-                <DynamicProductCard key={product.product_id} product={product} />
-              ))}
+                  <DynamicProductCard
+                    key={product.product_id}
+                    product={product}
+                  />
+                ))}
           </div>
           {/* )} */}
         </div>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 
 const DynamicProductCard = ({ product }) => {
-  console.log("product", product)
   return (
     <div className="relative m-auto flex w-full max-w-xs flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
       <Link
