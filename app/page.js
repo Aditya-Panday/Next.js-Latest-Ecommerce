@@ -5,7 +5,7 @@ import HomeLayout from "@/components/HomeLayout/HomeLayout";
 import ProductCategory from "@/components/HomeLayout/ProductCategory";
 import SubscribeNewsletter from "@/components/HomeLayout/SubscribeNewsletter";
 import { useGetMainProductDataQuery } from "@/lib/features/productApi/productMainSlice";
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   const { data: mensCollection, isLoading: isMLoading } =
@@ -26,7 +26,7 @@ export default function Home() {
     <HomeLayout>
       {/* Main Content */}
       <main>
-        <section className="relative h-[70vh] bg-theme-50">
+        <section className="relative h-[47vh] bg-theme-50">
           <div className="container h-full flex items-center">
             <div className="max-w-2xl space-y-6 z-10">
               <h1 className="text-6xl font-bold">Summer Collection 2024</h1>
@@ -34,7 +34,7 @@ export default function Home() {
                 Discover our latest arrivals and trending styles
               </p>
               <button className="bg-red-500 text-white px-4 py-2 rounded-lg" name="shop now">
-                Shop Now
+                <Link href="/shop">Shop Now</Link>
               </button>
             </div>
           </div>

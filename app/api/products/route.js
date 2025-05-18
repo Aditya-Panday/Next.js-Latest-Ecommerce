@@ -13,8 +13,8 @@ export async function GET(req) {
   const categoryParam = searchParams.get("category"); // e.g. "male,female".
   const brandParam = searchParams.get("brand"); // e.g. "Nike,Adidas".
   const subParam = searchParams.get("sub"); // sort by subCategory.
-  const sortParam = searchParams.get("sort"); // sort by price.
-  // const searchParam = searchParams.get("search"); // Search by product name.
+  const sortParam = searchParams.get("price"); // sort by price.
+  const searchParam = searchParams.get("search"); // Search by product name.
   const filters = [];
   const values = [];
 
@@ -41,9 +41,10 @@ export async function GET(req) {
     filters.push(`product_id = ?`);
     values.push(id);
   }
-
-  console.log("filter", filters);
-  console.log("values", values);
+  if (searchParam) {
+    filters.push(`product_name LIKE ?`);
+    values.push(`%${searchParam}%`);
+  }
 
   const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
   console.log("whereclause", whereClause);
@@ -51,9 +52,9 @@ export async function GET(req) {
   let orderByClause = "ORDER BY product_id DESC";
 
   if (sortParam === "price_asc") {
-    orderByClause = "ORDER BY price ASC";
+    orderByClause = "ORDER BY final_price ASC";
   } else if (sortParam === "price_desc") {
-    orderByClause = "ORDER BY price DESC";
+    orderByClause = "ORDER BY final_price DESC";
   }
 
   try {

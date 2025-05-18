@@ -1,14 +1,12 @@
 "use client";
-
 import { useState } from "react";
-// import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Star, Search, SlidersHorizontal, X } from "lucide-react";
-import DynamicProductCard from "../DynamicProductCard/DynamicProductCard";
-import ProductCardSkeleton from "../DynamicProductCard/ProductCardSkelton";
+import { Search, SlidersHorizontal, X } from "lucide-react";
 import ReuseableSkelton from "../DynamicProductCard/ReuseableSkelton";
+import ProductCardSkeleton from "../DynamicProductCard/ProductCardSkelton";
+import DynamicProductCard from "../DynamicProductCard/DynamicProductCard";
 
 export default function CategoryPage({
   productCollection,
@@ -16,53 +14,12 @@ export default function CategoryPage({
   productFilters,
   isFilterLoading,
   filters,
+  setFilters,
   handleCheckboxChange,
+  applyFilters,
 }) {
-  // console.log("productFilters", productFilters);
-
   // State for filters
-  const [searchQuery, setSearchQuery] = useState("");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-
-  const productsData = [
-    {
-      id: 0,
-      name: "Classic T-Shirt",
-      price: 299,
-      image: "/cloths.jpg",
-      discount: 999,
-      gender: "Womens",
-      brand: "ComfortPlus",
-    },
-    {
-      id: 1,
-      name: "Denim Jeans",
-      price: 590,
-      image: "/cloths.jpg",
-      discount: 999,
-      gender: "Mens",
-      brand: "ComfortPlus",
-    },
-    {
-      id: 2,
-      name: "Leather Jacket",
-      price: 199,
-      image: "/shoes.jpg",
-      discount: 999,
-      gender: "Unisex",
-      brand: "TechVision",
-    },
-    {
-      id: 3,
-      name: "Running Shoes",
-      price: 898,
-      image: "/cloths.jpg",
-      discount: 999,
-      gender: "Unisex",
-      brand: "SoundMaster",
-    },
-  ];
-  // Available brands and ratings for filters
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -78,8 +35,13 @@ export default function CategoryPage({
             <Input
               type="text"
               placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={filters.searchTerm || ""} 
+              onChange={(e) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  searchTerm: e.target.value,
+                }))
+              }
               className="pl-10 w-full"
             />
           </div>
@@ -288,10 +250,7 @@ export default function CategoryPage({
                 <Button variant="outline" className="flex-1">
                   Reset
                 </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => setIsMobileFilterOpen(false)}
-                >
+                <Button className="flex-1 md:hidden" onClick={applyFilters}>
                   Apply Filters
                 </Button>
               </div>
@@ -304,31 +263,43 @@ export default function CategoryPage({
           {/* Results summary */}
           <div className="mb-4 flex justify-between items-center">
             <p className="text-gray-600">
-              Showing 10
-              {"products"}
+              Showing {productCollection?.products?.length} of {"products"}
             </p>
-            <div className="hidden md:block">
-              <select className="text-sm border rounded-md p-2">
-                <option>Sort by: Featured</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
-                <option>Rating: High to Low</option>
-                <option>Newest First</option>
+            <div className=" flex gap-3">
+              <select
+                className="text-sm border rounded-md p-2"
+                value={filters.priceBy}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, priceBy: e.target.value }))
+                }
+              >
+                <option value="">Sort by: Featured</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
               </select>
+              <Button className="" size="sm" onClick={applyFilters}>
+                Apply Filters
+              </Button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 xxl:grid-cols-4 gap-6">
-            {isProdLoading
-              ? Array.from({ length: 8 }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
-                ))
-              : productCollection?.products?.map((product) => (
-                  <DynamicProductCard
-                    key={product.product_id}
-                    product={product}
-                  />
-                ))}
+            {isProdLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))
+            ) : productCollection?.products?.length === 0 ? (
+              <div className="col-span-full text-center text-amber-800 text-2xl font-semibold mt-10">
+                No Products Found
+              </div>
+            ) : (
+              productCollection.products.map((product) => (
+                <DynamicProductCard
+                  key={product.product_id}
+                  product={product}
+                />
+              ))
+            )}
           </div>
           {/* )} */}
         </div>
