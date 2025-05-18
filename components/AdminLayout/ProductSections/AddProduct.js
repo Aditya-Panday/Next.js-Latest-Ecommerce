@@ -1,17 +1,7 @@
 "use client";
-
-import { useState, useRef } from "react";
-import {
-  Check,
-  ChevronsUpDown,
-  // Loader2,
-  Plus,
-  Trash,
-  Upload,
-  X,
-} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Check, ChevronsUpDown, Plus, Trash, Upload, X } from "lucide-react";
 import Image from "next/image";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,9 +36,15 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { categoryOptions, folderStructure } from "@/lib/constants/constantFunc";
-import { ChunkUpload } from "@/lib/constants/aws-function/UploadChunk";
-import { useS3MultipartUploadMutation } from "@/lib/features/s3Api/s3Slice";
+import {
+  allowedTypes,
+  categoryOptions,
+  folderStructure,
+} from "@/lib/constants/constantFunc";
+import { FileUpload } from "@/utils/aws/awsUpload";
+import { ToastContainer, toast } from 'react-toastify';
+import CircleLoder from "@/components/CircleLoder";
+
 
 export default function AddProduct({
   createData,
@@ -57,19 +53,19 @@ export default function AddProduct({
   setFormState,
   sizes,
   handleSizeSelect,
-  handleAddColor,
   handleRemoveColor,
   handleSubmit,
+  isLoadingData,
+  clearImages
 }) {
+
   const [sizeOpen, setSizeOpen] = useState(false);
   const [colorInput, setColorInput] = useState("");
 
   // Image upload state
   const [images, setImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
-  // console.log("imagesdata", images);
-
-  const [s3MultipartUpload] = useS3MultipartUploadMutation();
 
   // Handle image removal
   const handleRemoveImage = (index) => {
@@ -81,31 +77,111 @@ export default function AddProduct({
     });
   };
 
+  const handleAddColor = () => {
+    if (colorInput.trim() && !formState.colors.includes(colorInput.trim())) {
+      setFormState((prev) => ({
+        ...prev,
+        colors: [...prev.colors, colorInput.trim()],
+      }));
+    }
+    setColorInput("");
+  };
+
   const uploadImages = async (images) => {
     const keyFilePath =
       process.env.NEXT_PUBLIC_AWS_GBP_FOLDER + folderStructure();
+    const imagesToUpload = images.filter((file) => !file.status);
 
-    const uploadedKey = await ChunkUpload(
-      images,
-      keyFilePath,
-      s3MultipartUpload
-    );
-    console.log("uploadedKey", uploadedKey);
-    setFormState({ ...formState, image_url: uploadedKey });
-  };
+    if (imagesToUpload.length === 0) {
+      toast.error(`Please select images...`, {
+        autoClose: 1500,
+      });
+      return;
+    }
 
-  // Handle image selection
-  const handleImageSelect = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newImages = Array.from(e.target.files).map((file) => ({
-        file,
-        preview: URL.createObjectURL(file),
-        progress: 0,
+    try {
+      setUploading(true);
+      toast.info(`Wait for a moment files are uploading..`, {
+        autoClose: 1500,
+      });
+      const uploadedKey = await FileUpload(imagesToUpload, keyFilePath);
+      if (uploadedKey) {
+        toast.success("Image uploaded successfully.", {
+          autoClose: 1500,
+        });
+      }
+      console.log("uploadedKey", uploadedKey);
+
+      setFormState((prevState) => ({
+        ...prevState,
+        image_url: [
+          ...(prevState.image_url || []),
+          ...(Array.isArray(uploadedKey)    // Check if uploadedKey is an array (multiple images)
+            ? uploadedKey.map((item) => item.location)
+            : [uploadedKey.location]),
+        ],
       }));
-
-      setImages((prev) => [...prev, ...newImages]);
+    }
+    catch (error) {
+      console.error(error)
+    }
+    finally {
+      setUploading(false);
     }
   };
+
+
+  const handleImageSelect = (e) => {
+    const selectedFiles = Array.from(e.target.files || []);
+
+    const totalFiles = images.length + selectedFiles.length;
+    if (totalFiles > 5) {
+      toast.error("You can only upload up to 5 images.", {
+        autoClose: 1500,
+      });
+      return;
+    }
+
+    const newValidImages = [];
+
+    selectedFiles.forEach((file) => {
+      const isDuplicate = images.some(
+        (img) => img.name === file.name && img.size === file.size
+      );
+
+      if (!allowedTypes.includes(file.type)) {
+        toast.error(`Invalid File format.`, {
+          autoClose: 1500,
+        });
+      } else if (isDuplicate) {
+        toast.error(`Duplicate files included please select another file or change the file name.`, {
+          autoClose: 1500,
+        });
+      } else {
+        file.preview = URL.createObjectURL(file);
+        file.progress = 0;
+        file.status = false;
+        newValidImages.push(file);
+      }
+    });
+
+    if (newValidImages.length > 0) {
+      setImages((prev) => [...prev, ...newValidImages]);
+    }
+
+    e.target.value = null; // reset input in case same file is selected again
+  };
+
+  const resetImages = () => {
+    setImages([]);
+  };
+
+  // ✅ If clearImages prop exists, set it when component renders
+  useEffect(() => {
+    if (typeof clearImages === "function") {
+      clearImages(resetImages);
+    }
+  }, [clearImages]);
 
   return (
     <div className="container mx-auto py-10 px-4 max-w-5xl">
@@ -129,6 +205,7 @@ export default function AddProduct({
                     id="product-name"
                     placeholder="Enter product name"
                     value={formState.product_name}
+                    disabled={isLoadingData}
                     onChange={(e) =>
                       setFormState({
                         ...formState,
@@ -137,11 +214,13 @@ export default function AddProduct({
                     }
                     required
                   />
-                </div>
+                  {/* {formState?.errors?.sizes && !formState?.sizes && (
+                    <p className="text-red-500">{formState.errors.sizes}</p>
+                  )} */}
+                  <p className="text-red-500">
+                    {formState.errors.product_name}
+                  </p>
 
-                <div className="space-y-2">
-                  <Label htmlFor="sku">SKU</Label>
-                  <Input id="sku" placeholder="Enter SKU" />
                 </div>
               </div>
 
@@ -156,7 +235,8 @@ export default function AddProduct({
                       setFormState({ ...formState, brand_name: value })
                     }
                     required
-                    disabled={isCreateDataLoading}
+                    disabled={isCreateDataLoading || isLoadingData}
+
                   >
                     <SelectTrigger id="brand">
                       <SelectValue placeholder="Select brand" />
@@ -169,6 +249,9 @@ export default function AddProduct({
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-red-500">
+                    {formState?.errors.brand_name}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -180,7 +263,7 @@ export default function AddProduct({
                     onValueChange={(value) => {
                       setFormState({ ...formState, sub_category: value });
                     }}
-                    disabled={isCreateDataLoading}
+                    disabled={isCreateDataLoading || isLoadingData}
                     required
                   >
                     <SelectTrigger id="category">
@@ -194,12 +277,16 @@ export default function AddProduct({
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-red-500">
+                    {formState?.errors.sub_category}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subcategory">Category</Label>
                   <Select
                     value={formState.category_name}
+                    disabled={isLoadingData}
                     onValueChange={(value) =>
                       setFormState({ ...formState, category_name: value })
                     }
@@ -218,6 +305,9 @@ export default function AddProduct({
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-red-500">
+                    {formState?.errors.category_name}
+                  </p>
                 </div>
               </div>
             </div>
@@ -235,14 +325,14 @@ export default function AddProduct({
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
+                        disabled={isLoadingData}
                         role="combobox"
                         aria-expanded={sizeOpen}
                         className="w-full justify-between h-10"
                       >
                         {formState.sizes?.length > 0
-                          ? `${formState.sizes.length} size${
-                              formState.sizes.length > 1 ? "s" : ""
-                            } selected`
+                          ? `${formState.sizes.length} size${formState.sizes.length > 1 ? "s" : ""
+                          } selected`
                           : "Select sizes"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -260,11 +350,10 @@ export default function AddProduct({
                                 onSelect={() => handleSizeSelect(size.value)}
                               >
                                 <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    formState?.sizes?.includes(size.value)
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  }`}
+                                  className={`mr-2 h-4 w-4 ${formState?.sizes?.includes(size.value)
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                    }`}
                                 />
                                 {size.label}
                               </CommandItem>
@@ -274,6 +363,9 @@ export default function AddProduct({
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  <p className="text-red-500">
+                    {formState?.errors.sizes}
+                  </p>
 
                   {formState.sizes?.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
@@ -296,6 +388,7 @@ export default function AddProduct({
                       ))}
                     </div>
                   )}
+
                 </div>
 
                 {/* Colors */}
@@ -345,6 +438,9 @@ export default function AddProduct({
                       ))}
                     </div>
                   )}
+                  <p className="text-red-500">
+                    {formState?.errors.colors}
+                  </p>
                 </div>
               </div>
             </div>
@@ -361,6 +457,9 @@ export default function AddProduct({
                 }
                 className="min-h-32"
               />
+              <p className="text-red-500">
+                {formState?.errors.description}
+              </p>
             </div>
 
             {/* Images */}
@@ -382,24 +481,39 @@ export default function AddProduct({
                     <Upload className="h-10 w-10 text-primary/60" />
                     <h3 className="text-lg font-medium">Upload Images</h3>
                     <p className="text-sm text-muted-foreground">
+                      You can select only 5 images.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Allowed Extensions: (webp, jpeg, jpg, avif, gif, png)
+                    </p><p className="text-sm text-muted-foreground">
                       Drag and drop your images here or click to browse
+                    </p>
+                    <p className="text-red-500">
+                      {formState?.errors.image_url}
                     </p>
                     <Button
                       type="button"
                       variant="outline"
+                      disabled={uploading}
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      Select Images
+                      Select Images ({images.length}/5)
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => uploadImages(images)}
-                    >
-                      Upload Images
-                    </Button>
+
+                    {images.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="p-4"
+                        disabled={uploading}
+                        onClick={() => uploadImages(images)}
+                      >
+                        {uploading ? <CircleLoder /> : "Upload Images "}
+                      </Button>
+                    )}
                   </div>
                 </div>
+
 
                 {images.length > 0 && (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
@@ -427,14 +541,18 @@ export default function AddProduct({
                           <div className="absolute bottom-1 left-1 right-1 bg-gray-300 rounded-full overflow-hidden h-4">
                             <div
                               style={{ width: `${image.progress}%` }}
-                              className={`h-full ${
-                                image.progress === 100
-                                  ? "bg-green-500"
-                                  : "bg-blue-500"
-                              } transition-all duration-300`}
+                              className={`h-full ${image.progress === 100
+                                ? "bg-green-500"
+                                : "bg-blue-500"
+                                } transition-all duration-300`}
                             >
-                              <span className="text-xs text-white font-semibold p-4">
-                                {10}%
+                              <span
+                                className={`text-xs px-4 py-1 ${image.progress > 0
+                                  ? "text-gray-500"
+                                  : "text-black"
+                                  }`}
+                              >
+                                {image.progress}%
                               </span>
                             </div>
                           </div>
@@ -445,7 +563,6 @@ export default function AddProduct({
                 )}
               </div>
             </div>
-
             {/* Pricing */}
             <div className="space-y-4 pt-2">
               <h3 className="text-lg font-medium">Pricing</h3>
@@ -458,13 +575,15 @@ export default function AddProduct({
                   <Input
                     id="price"
                     type="number"
-                    placeholder="0.00"
+                    placeholder="0"
                     value={formState.price}
                     onChange={(e) =>
                       setFormState({ ...formState, price: e.target.value })
                     }
-                    required
                   />
+                  <p className="text-red-500">
+                    {formState?.errors.price}
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -480,39 +599,71 @@ export default function AddProduct({
                       setFormState({ ...formState, discount: e.target.value })
                     }
                   />
+                  <p className="text-red-500">
+                    {formState?.errors.discount}
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Status */}
-            <div className="space-y-4 pt-2">
-              <h3 className="text-lg font-medium">Status</h3>
+            <div className="flex gap-10">
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="status"
-                  checked={formState.status}
-                  onCheckedChange={(checked) =>
-                    setFormState({ ...formState, status: checked ? 1 : 0 })
-                  }
-                />
-                <Label htmlFor="status">
-                  {formState.status == 1 ? "Active" : "Inactive"}
-                </Label>
+              <div className="space-y-4 pt-2">
+                <h3 className="text-lg font-medium">Status</h3>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="product-status" // ✅ unique ID
+                    checked={formState.status === "1"}
+                    onCheckedChange={(checked) =>
+                      setFormState({ ...formState, status: checked ? "1" : "0" })
+                    }
+                  />
+                  <Label htmlFor="product-status">
+                    {formState.status === "1" ? "Active" : "Inactive"}
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {formState.status === "1"
+                    ? "Product will be visible to customers."
+                    : "Product will be hidden from customers."}
+                </p>
+                <p className="text-red-500">{formState?.errors?.status}</p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {formState.status == 1
-                  ? "Product will be visible to customers"
-                  : "Product will be hidden from customers"}
-              </p>
+
+              <div className="space-y-4 pt-2">
+                <h3 className="text-lg font-medium">Stock Status</h3> {/* ✅ Better heading */}
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="product-stock" // ✅ unique ID
+                    checked={formState.stock === "1"}
+                    onCheckedChange={(checked) =>
+                      setFormState({ ...formState, stock: checked ? "1" : "0" })
+                    }
+                  />
+                  <Label htmlFor="product-stock">
+                    {formState.stock === "1" ? "In Stock" : "Out of Stock"}
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {formState.stock === "1"
+                    ? "Product is available in stock."
+                    : "Product is currently out of stock."}
+                </p>
+                <p className="text-red-500">{formState?.errors?.stock}</p>
+              </div>
+
             </div>
           </CardContent>
 
           <CardFooter className="flex justify-end border-t bg-muted/10 p-6">
-            <Button type="submit">Save Product</Button>
+            <Button onClick={(e) => handleSubmit(e)}>Save Product</Button>
           </CardFooter>
         </form>
       </Card>
+      <ToastContainer />
     </div>
   );
 }

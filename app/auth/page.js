@@ -41,7 +41,7 @@ export default function AuthPage() {
                 </p>
 
                 <div className="mt-1">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" name="google">
                     <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                       <path
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -119,6 +119,7 @@ export default function AuthPage() {
                     />
                     <button
                       type="button"
+                      name="password-icon"
                       className="absolute inset-y-0 right-0 flex items-center pr-3"
                       onClick={() => setShowPassword(!showPassword)}
                     >
@@ -166,7 +167,7 @@ export default function AuthPage() {
                 )}
 
                 <div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading} name="sign">
                     {isLoading && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
@@ -182,6 +183,7 @@ export default function AuthPage() {
                 <button
                   className="font-medium text-primary hover:text-primary/80"
                   onClick={() => setIsLogin(!isLogin)}
+                  name="sign"
                 >
                   {isLogin ? "Sign up" : "Sign in"}
                 </button>

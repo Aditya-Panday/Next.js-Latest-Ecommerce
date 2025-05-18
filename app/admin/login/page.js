@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/constants/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ const page = () => {
                   <div className="flex flex-col items-center text-center">
                     <h1 className="text-2xl font-bold">Welcome Back</h1>
                     <p className="text-balance text-muted-foreground">
-                      Login to your Acme Inc account
+                      Login to your Dotfit admin account
                     </p>
                   </div>
                   <div className="grid gap-2">
@@ -41,7 +41,7 @@ const page = () => {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full">
+                  <Button type="submit" className="w-full" name="login">
                     Login
                   </Button>
                   <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
@@ -50,7 +50,7 @@ const page = () => {
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" name="Login with Apple">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -62,7 +62,7 @@ const page = () => {
                       </svg>
                       <span className="sr-only">Login with Apple</span>
                     </Button>
-                    <Button variant="outline" className="w-full">
+                    <Button variant="outline" className="w-full" name="Login with Google">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"

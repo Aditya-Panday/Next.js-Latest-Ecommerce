@@ -1,4 +1,4 @@
-import { s3 } from "@/lib/constants/aws-function/s3Config";
+import { s3 } from "@/utils/aws/s3Config";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -61,15 +61,12 @@ export async function POST(req) {
             { status: 400 }
           );
         }
-        console.log("parts", parts);
-
         const params = {
           Bucket: bucketName,
           Key: fileName,
           UploadId: uploadId,
           MultipartUpload: { Parts: parts },
         };
-        console.log("params", params);
 
         const result = await s3.completeMultipartUpload(params).promise();
         return NextResponse.json({ result }, { status: 200 });

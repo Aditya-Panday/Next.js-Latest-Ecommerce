@@ -77,14 +77,6 @@ const HomeLayout = ({ children }) => {
               >
                 Shop
               </Link>
-              <Link
-                href="/category"
-                className={`text-sm font-medium transition-colors hover:text-red-500 ${
-                  isActive("/category") ? "text-red-500" : "text-black"
-                }`}
-              >
-                Categories
-              </Link>
             </div>
 
             {/* Right Section - Icons */}

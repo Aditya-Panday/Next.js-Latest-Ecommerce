@@ -10,7 +10,9 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`antialiased`}>
         <StoreProvider>
-          <ReactQueryProvider>{children}</ReactQueryProvider>
+          {/* <ReactQueryProvider> */}
+            {children}
+            {/* </ReactQueryProvider> */}
         </StoreProvider>
       </body>
     </html>

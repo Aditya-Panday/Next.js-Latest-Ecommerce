@@ -1,61 +1,48 @@
+"use client";
 import DynamicProductCard from "@/components/DynamicProductCard/DynamicProductCard";
+import ProductCardSkeleton from "@/components/DynamicProductCard/ProductCardSkelton";
 import HomeLayout from "@/components/HomeLayout/HomeLayout";
 import ProductCategory from "@/components/HomeLayout/ProductCategory";
 import SubscribeNewsletter from "@/components/HomeLayout/SubscribeNewsletter";
-import Image from "next/image";
+import { useGetMainProductDataQuery } from "@/lib/features/productApi/productMainSlice";
+import Link from "next/link";
 
 export default function Home() {
-  const products = [
-    {
-      id: 0,
-      name: "Classic T-Shirt",
-      price: 299,
-      image: "/cloths.jpg",
-      discount: 999,
-    },
-    {
-      id: 1,
-      name: "Denim Jeans",
-      price: 590,
-      image: "/cloths.jpg",
-      discount: 999,
-    },
-    {
-      id: 2,
-      name: "Leather Jacket",
-      price: 199,
-      image: "/shoes.jpg",
-      discount: 999,
-    },
-    {
-      id: 3,
-      name: "Running Shoes",
-      price: 898,
-      image: "/cloths.jpg",
-      discount: 999,
-    },
-  ];
+  const { data: mensCollection, isLoading: isMLoading } =
+    useGetMainProductDataQuery({
+      category: "male",
+      page: 1,
+      limit: 10,
+    });
+
+  const { data: femaleCollection, isLoading: isfLoading } =
+    useGetMainProductDataQuery({
+      category: "female",
+      page: 1,
+      limit: 10,
+    });
+
   return (
     <HomeLayout>
       {/* Main Content */}
-      {/* <main >
-        <section className="relative h-[70vh] bg-theme-50">
+      <main>
+        <section className="relative h-[47vh] bg-theme-50">
           <div className="container h-full flex items-center">
             <div className="max-w-2xl space-y-6 z-10">
               <h1 className="text-6xl font-bold">Summer Collection 2024</h1>
               <p className="text-xl text-gray-600">
                 Discover our latest arrivals and trending styles
               </p>
-              <button className="bg-red-500 text-white px-4 py-2 rounded-lg">
-                Shop Now
+              <button className="bg-red-500 text-white px-4 py-2 rounded-lg" name="shop now">
+                <Link href="/shop">Shop Now</Link>
               </button>
             </div>
           </div>
           <div className="absolute inset-0 banner-gradient" />
         </section>
-      </main> */}
+      </main>
       {/* Banner */}
-      <div className="container mx-auto px-4 py-8 bg-white ">
+      {/*  <div className="container mx-auto px-4 py-8 bg-white ">
         <main className="pt-16">
           <section className="mb-12">
             <div
@@ -79,19 +66,26 @@ export default function Home() {
             </div>
           </section>
         </main>
-      </div>
+      </div>*/}
+
       {/* Categories */}
       <ProductCategory />
 
       {/* Men's Section */}
-
       <section className="py-16 text-black" style={{ background: "#fdf8f6" }}>
         <div className="container">
           <h2 className="text-3xl font-bold mb-8">Men&apos;s Collection</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <DynamicProductCard key={product.id} product={product} />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4  gap-6">
+            {isMLoading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))
+              : mensCollection?.products?.map((product) => (
+                  <DynamicProductCard
+                    key={product.product_id}
+                    product={product}
+                  />
+                ))}
           </div>
         </div>
       </section>
@@ -100,13 +94,21 @@ export default function Home() {
       <section className="py-16 bg-white text-black">
         <div className="container">
           <h2 className="text-3xl font-bold mb-8">Women&apos;s Collection</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <DynamicProductCard key={product.id} product={product} />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {isfLoading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))
+              : femaleCollection?.products?.map((product) => (
+                  <DynamicProductCard
+                    key={product.product_id}
+                    product={product}
+                  />
+                ))}
           </div>
         </div>
       </section>
+      {/* <ProductCardSkeleton /> */}
 
       {/* Subscribe Newsletter */}
       <SubscribeNewsletter />

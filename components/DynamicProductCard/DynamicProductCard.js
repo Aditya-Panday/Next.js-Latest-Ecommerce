@@ -7,32 +7,38 @@ const DynamicProductCard = ({ product }) => {
   return (
     <div className="relative m-auto flex w-full max-w-xs flex-col overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md">
       <Link
-        href={product.name}
-        className="relative mx-3 mt-3 flex h-60 overflow-hidden rounded-xl"
+        href={`/product-detail/${product.product_id}`}
+        className="relative mx-3 mt-3 flex h-72 overflow-hidden rounded-xl"
       >
         <Image
           className="object-cover w-full h-full"
-          src="/shoes.webp"
+          src={product.image_url[0]}
           alt="product image"
           width={500}
           height={500}
         />
-        <span className="absolute top-0 left-0 m-2 rounded-full bg-black px-2 text-center text-sm font-medium text-white">
-          39% OFF
-        </span>
+        {product?.discount > 0 && (
+          <span className="absolute top-0 left-0 m-2 rounded-full bg-black px-2 text-center text-sm font-medium text-white">
+            {product.discount}% OFF
+          </span>
+        )}
+
       </Link>
       <div className="mt-4 px-5 pb-5">
         <h5 className="text-xl tracking-tight text-slate-900">
-          {product.name}{" "}
+          {product.product_name}
         </h5>
         <div className="mt-2 mb-5 flex items-center justify-between">
           <p>
             <span className="text-3xl font-bold text-slate-900 ">
-              ₹{product.price}
+              ₹{product.final_price}
             </span>
-            <span className="text-sm text-slate-900 line-through ml-2  ">
-              ₹{product.discount}
-            </span>
+            {product?.discount > 0 && (
+              <span className="text-sm text-slate-900 line-through ml-2  ">
+                ₹{product.price}
+              </span>
+            )}
+
           </p>
           <div className="flex items-center">
             {Array(5)
@@ -40,9 +46,8 @@ const DynamicProductCard = ({ product }) => {
               .map((_, i) => (
                 <Star
                   key={i}
-                  className={`h-5 w-5 ${
-                    i < 3 ? "text-yellow-300" : "text-gray-300"
-                  }`} // First 3 stars yellow, others gray
+                  className={`h-5 w-5 ${i < 3 ? "text-yellow-300" : "text-gray-300"
+                    }`} // First 3 stars yellow, others gray
                   fill={i < 3 ? "currentColor" : "none"}
                 />
               ))}
@@ -54,7 +59,7 @@ const DynamicProductCard = ({ product }) => {
         <div className="flex items-center gap-2 justify-between">
           <Heart />
           <Link
-            href="#"
+            href={`/product-detail/${product.product_id}`}
             className="flex items-center justify-center rounded-md bg-slate-900 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-blue-300"
           >
             <ShoppingCart className="mr-2 h-6 w-6" />

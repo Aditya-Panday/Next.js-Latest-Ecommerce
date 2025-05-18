@@ -109,7 +109,8 @@ export async function GET(req) {
       ? `WHERE ${whereClause.join(" AND ")}`
       : "";
 
-    const getSubcategory = `SELECT * FROM subcategory ${whereSQL} LIMIT ? OFFSET ?`;
+    const getSubcategory = `SELECT * FROM subcategory ${whereSQL} ORDER BY id DESC LIMIT ? OFFSET ?`;
+
     values.push(limit, offset);
     const [subcategory] = await db.query(getSubcategory, values);
 
