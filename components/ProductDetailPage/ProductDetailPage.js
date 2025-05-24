@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Star, Minus, Plus, ShoppingCart, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import HomeLayout from "../HomeLayout/HomeLayout";
 import { useGetMainProductDataQuery } from "@/lib/features/productApi/productMainSlice";
 import ReuseableSkelton from "../DynamicProductCard/ReuseableSkelton";
 import TabSection from "./TabSection";
@@ -102,7 +101,6 @@ export default function ProductDetailPage({ id }) {
   }, [productData]);
 
   return (
-    <HomeLayout>
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
         {isProdLoading ? (
@@ -371,7 +369,6 @@ export default function ProductDetailPage({ id }) {
             </div>
           </div>
         )}
-      </div>{" "}
-    </HomeLayout>
+      </div>
   );
 }

@@ -4,7 +4,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useGetMainProductDataQuery } from "@/lib/features/productApi/productMainSlice";
 import { useGetFiltersDataQuery } from "@/lib/features/productFilters/productFilterSlice";
 import CategoryPage from "@/components/ShopPage/ShopPagesDesign";
-import HomeLayout from "@/components/HomeLayout/HomeLayout";
 
 const Shop = () => {
   const searchParams = useSearchParams();
@@ -24,7 +23,6 @@ const Shop = () => {
     subcategory: [],
     priceBy: "",
   });
-  console.log("filters", filters);
   useEffect(() => {
     const getInitialFilters = () => {
       const category = searchParams.get("category")?.split(",") || [];
@@ -92,7 +90,6 @@ const Shop = () => {
     useGetFiltersDataQuery();
 
   return (
-    <HomeLayout>
       <CategoryPage
         productCollection={productCollection}
         isProdLoading={isProdLoading}
@@ -103,7 +100,6 @@ const Shop = () => {
         handleCheckboxChange={handleCheckboxChange}
         applyFilters={applyFilters}
       />
-    </HomeLayout>
   );
 };
 

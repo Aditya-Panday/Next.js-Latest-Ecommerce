@@ -11,7 +11,6 @@ import { Separator } from "@/components/ui/separator";
 import { Package, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import HomeLayout from "@/components/HomeLayout/HomeLayout";
 
 const initialAddresses = [
   {
@@ -88,7 +87,6 @@ const OrderConfirmed = () => {
     return addresses.find((a) => a.id === selectedAddress);
   };
   return (
-    <HomeLayout>
       <div className="max-w-4xl mx-auto my-10">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Thank You for Your Order!</h1>
@@ -218,8 +216,7 @@ const OrderConfirmed = () => {
             Continue Shopping
           </Button>
         </div>
-      </div>{" "}
-    </HomeLayout>
+      </div>
   );
 };
 

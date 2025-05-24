@@ -1,11 +1,10 @@
-import db from "@/utils/db";
+import { supabase } from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     const { name } = await req.json();
 
-    // Validate required fields
     if (!name) {
       return NextResponse.json(
         { message: "Brand name is required." },
@@ -14,23 +13,43 @@ export async function POST(req) {
     }
 
     // Check if brand name exists
-    const checkBrand = `SELECT COUNT(*) AS count FROM brands WHERE name = ?`;
-    const [result] = await db.query(checkBrand, [name]);
+    let { data: existingBrands, error: selectError } = await supabase
+      .from("brands")
+      .select("id")
+      .eq("name", name);
 
-    if (result[0].count > 0) {
+    if (selectError) {
+      console.error(selectError);
+      return NextResponse.json(
+        { message: "Error checking brand name." },
+        { status: 500 }
+      );
+    }
+
+    if (existingBrands.length > 0) {
       return NextResponse.json(
         { message: "This Brand name already exists." },
         { status: 400 }
       );
     }
 
-    // Add the new brand
-    const addBrand = `INSERT INTO brands (name) VALUES (?)`;
-    await db.query(addBrand, [name]);
+    // Insert new brand
+    const { data, error: insertError } = await supabase
+      .from("brands")
+      .insert([{ name }]);
+
+    if (insertError) {
+      console.error(insertError);
+      return NextResponse.json(
+        { message: "Error inserting brand." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       status: true,
       message: "Brand created successfully",
+      data,
     });
   } catch (error) {
     console.error("Error:", error);
@@ -44,31 +63,45 @@ export async function POST(req) {
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
+    let id = parseInt(searchParams.get("id"));
 
-    let id = parseInt(searchParams.get("id")) || "";
-
-    // Validate required fields
     if (!id) {
-      return NextResponse.json({
-        message: "Product id required.",
-        status: 400,
-      });
+      return NextResponse.json(
+        { message: "Brand id required." },
+        { status: 400 }
+      );
     }
 
     // Check if brand exists
-    const checkBrandExist = `SELECT COUNT(*) AS count FROM brands WHERE id = ?`;
-    const [result] = await db.query(checkBrandExist, [id]);
+    let { data: brand, error: selectError } = await supabase
+      .from("brands")
+      .select("id")
+      .eq("id", id)
+      .single();
 
-    if (result[0].count == 0) {
-      return NextResponse.json({ message: "Id doesn't exist.", status: 404 });
+    if (selectError) {
+      return NextResponse.json(
+        { message: "Id doesn't exist." },
+        { status: 404 }
+      );
     }
 
-    // Delete the brand
-    const deleteBrand = `DELETE FROM brands WHERE id = ?`;
-    await db.query(deleteBrand, [id]);
+    // Delete brand
+    const { error: deleteError } = await supabase
+      .from("brands")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error(deleteError);
+      return NextResponse.json(
+        { message: "Error deleting brand." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
-      status: 200,
+      status: true,
       message: "Brand deleted successfully",
     });
   } catch (error) {
@@ -80,51 +113,47 @@ export async function DELETE(req) {
   }
 }
 
-
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
 
     let page = parseInt(searchParams.get("page")) || 1;
     let limit = parseInt(searchParams.get("limit")) || 10;
-    let offset = (page - 1) * limit;
-
     let status = searchParams.get("status");
     let search = searchParams.get("search");
 
-    let whereClause = [];
-    let values = [];
+    let query = supabase.from("brands").select("*", { count: "exact" });
 
-    if (status !== null && (status === "0" || status === "1")) {
-      whereClause.push("status = ?");
-      values.push(parseInt(status));
+    // Filters
+    if (status === "0" || status === "1") {
+      query = query.eq("status", parseInt(status));
     }
 
     if (search) {
-      whereClause.push("name LIKE ?");
-      values.push(`%${search}%`);
+      query = query.ilike("name", `%${search}%`); // case-insensitive LIKE
     }
 
-    let whereSQL = whereClause.length
-      ? `WHERE ${whereClause.join(" AND ")}`
-      : "";
+    // Pagination
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to).order("id", { ascending: false });
 
-    const getBrands = `SELECT * FROM brands ${whereSQL} ORDER BY id DESC LIMIT ? OFFSET ?`;
-    values.push(limit, offset);
-    console.log("bd", getBrands);
-    const [brands] = await db.query(getBrands, values);
+    const { data, count, error } = await query;
 
-    const countQuery = `SELECT COUNT(*) AS total FROM brands ${whereSQL}`;
-    const [countResult] = await db.query(countQuery, values.slice(0, -2)); // Last 2 params limit/offset hata rahe hain
-
-    const total = countResult[0]?.total || 0;
+    if (error) {
+      console.error(error);
+      return NextResponse.json(
+        { message: "Error fetching brands." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       status: true,
-      data: brands,
-      total,
+      data,
+      total: count,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(count / limit),
     });
   } catch (error) {
     console.error("Error:", error);

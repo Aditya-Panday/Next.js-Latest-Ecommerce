@@ -10,7 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/constants/utils";
 import { useMobile } from "@/utils/hooks/use-mobile";
-import HomeLayout from "@/components/HomeLayout/HomeLayout";
 
 const Page = () => {
   const [selectedChat, setSelectedChat] = useState("1");
@@ -214,7 +213,7 @@ const Page = () => {
     : null;
   const currentMessages = selectedChat ? conversations[selectedChat] || [] : [];
   return (
-    <HomeLayout>
+    
       <div className="container mx-auto max-w-5xl py-6">
         <h1 className="text-2xl font-bold mb-6">Customer Support</h1>
 
@@ -371,7 +370,6 @@ const Page = () => {
           </div>
         </div>
       </div>
-    </HomeLayout>
   );
 };
 

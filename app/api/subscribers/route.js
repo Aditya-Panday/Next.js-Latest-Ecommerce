@@ -1,45 +1,47 @@
-import db from "@/utils/db";
+import { supabase } from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     const { email } = await req.json();
-
-    // ✅ Email validation
     const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-    if (!email) {
-      return NextResponse.json({ message: "Email required." }, { status: 400 });
-    }
+
     if (!email || !emailRegex.test(email)) {
       return NextResponse.json(
-        { message: "Invalid email format." },
+        { status: false, message: "Invalid or missing email." },
         { status: 400 }
       );
     }
 
     // ✅ Check if email already exists
-    const checkSubscriber = `SELECT COUNT(*) AS count FROM subscribers WHERE email = ?`;
-    const [result] = await db.query(checkSubscriber, [email]);
+    const { data: existing, error: existError } = await supabase
+      .from("subscribers")
+      .select("id")
+      .eq("email", email)
+      .single();
 
-    if (result[0].count > 0) {
+    if (existing) {
       return NextResponse.json(
-        { message: "This email already exists." },
+        { status: false, message: "This email is already subscribed." },
         { status: 400 }
       );
     }
 
-    // ✅ Insert the subscriber (Use parameterized query to prevent SQL injection)
-    const addSubscriber = `INSERT INTO subscribers (email) VALUES (?)`;
-    await db.query(addSubscriber, [email]);
+    // ✅ Insert new subscriber
+    const { error: insertError } = await supabase
+      .from("subscribers")
+      .insert([{ email }]);
+
+    if (insertError) throw insertError;
 
     return NextResponse.json(
-      { status: 200, message: "Thanks for register." },
+      { status: true, message: "Thanks for subscribing." },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.error("POST Error:", error);
     return NextResponse.json(
-      { message: "An internal server error occurred" },
+      { status: false, message: "Server error. Please try again later." },
       { status: 500 }
     );
   }
@@ -47,37 +49,30 @@ export async function POST(req) {
 
 export async function GET(req) {
   try {
-    // ✅ Parse query params
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const offset = (page - 1) * limit;
 
-    // ✅ Fetch data ordered by latest subscription date
-    const getSubscribers = `
-      SELECT * FROM subscribers 
-      ORDER BY id DESC 
-      LIMIT ? OFFSET ?
-    `;
-    const [subscribersData] = await db.query(getSubscribers, [limit, offset]);
+    const { data, count, error } = await supabase
+      .from("subscribers")
+      .select("*", { count: "exact" })
+      .order("id", { ascending: false })
+      .range(offset, offset + limit - 1);
 
-    // ✅ Get total count (without offset/limit)
-    const countQuery = `SELECT COUNT(*) AS total FROM subscribers`;
-    const [countResult] = await db.query(countQuery);
-
-    const total = countResult[0]?.total || 0;
+    if (error) throw error;
 
     return NextResponse.json({
       status: true,
-      data: subscribersData,
-      total,
+      data,
+      total: count,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil((count || 0) / limit),
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("GET Error:", error);
     return NextResponse.json(
-      { message: "An internal server error occurred" },
+      { status: false, message: "Server error. Please try again later." },
       { status: 500 }
     );
   }

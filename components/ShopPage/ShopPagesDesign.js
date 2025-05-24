@@ -263,7 +263,7 @@ export default function CategoryPage({
           {/* Results summary */}
           <div className="mb-4 flex justify-between items-center">
             <p className="text-gray-600">
-              Showing {productCollection?.products?.length} of {"products"}
+              Showing {productCollection?.products?.length} of products
             </p>
             <div className=" flex gap-3">
               <select
@@ -293,7 +293,7 @@ export default function CategoryPage({
                 No Products Found
               </div>
             ) : (
-              productCollection.products.map((product) => (
+              productCollection?.products?.map((product) => (
                 <DynamicProductCard
                   key={product.product_id}
                   product={product}
