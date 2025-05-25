@@ -1,16 +1,25 @@
+// app/layout.js or app/layout.tsx
+
 import "./globals.css";
 import StoreProvider from "./StoreProvider";
+import {
+  ClerkProvider,
+} from "@clerk/nextjs";
+
+export const metadata = {
+  title: "Dotfit Store",
+  description: "Your fitness e-commerce platform",
+};
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <title>Dotfit Store</title>
-      </head>
-      <body className={`antialiased`}>
-        <StoreProvider>
+      <body className="antialiased">
+        <ClerkProvider>
+          <StoreProvider>
             {children}
-        </StoreProvider>
+          </StoreProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

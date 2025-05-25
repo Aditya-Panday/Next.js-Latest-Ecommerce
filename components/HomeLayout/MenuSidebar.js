@@ -1,4 +1,11 @@
 import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  useClerk,
+  UserButton,
+} from "@clerk/nextjs";
+import {
   Home,
   ShoppingBag,
   FileText,
@@ -10,6 +17,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
+import { Button } from "../ui/button";
 
 const navItems = [
   { name: "Home", href: "/", icon: Home },
@@ -21,23 +29,43 @@ const navItems = [
 
 const MenuSidebar = ({ setIsMenuOpen }) => {
   const pathname = usePathname();
+  const { signOut, user } = useClerk();
+  console.log("user", user);
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50">
-      <div className="bg-white w-64 h-full  shadow-lg text-black">
+    <div
+      className="fixed inset-0 bg-black/70 z-50"
+      onClick={() => setIsMenuOpen(false)} // Close on outer click
+    >
+      <div
+        className="bg-white w-64 h-full  shadow-lg text-black"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Menu Content */}
-        <div className="flex h-16 items-center border-b px-6 justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 font-semibold"
-            onClick={() => setIsOpen(false)}
-          >
-            <ShoppingBag className="h-6 w-6" />
-            <span>Dotfit Store</span>
-          </Link>
-          <button className="p-2">
-            <X size={18} onClick={() => setIsMenuOpen(false)} />
-          </button>
+        <div className="flex h-16 items-center border-b px-2 justify-between">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button variant="default">Sign In</Button>
+            </SignInButton>
+          </SignedOut>
+
+          <SignedIn>
+            <UserButton afterSwitchSessionUrl="/" />
+            <Button
+              variant="default"
+              onClick={() => {
+                signOut();
+              }}
+            >
+              Sign out
+            </Button>
+          </SignedIn>
+
+          <div className="flex items-center gap-4">
+            <button className="p-2" onClick={() => setIsMenuOpen(false)}>
+              <X size={18} />
+            </button>
+          </div>
         </div>
         <nav className="space-y-1 px-2 py-5">
           {navItems.map((item) => (
@@ -49,7 +77,6 @@ const MenuSidebar = ({ setIsMenuOpen }) => {
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-muted"
               }`}
-              onClick={() => setIsOpen(false)}
             >
               <item.icon className="h-4 w-4" />
               {item.name}

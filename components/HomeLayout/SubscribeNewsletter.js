@@ -35,8 +35,12 @@ const SubscribeNewsletter = () => {
 
     try {
       const res = await addSubscriber(state.email).unwrap();
+      console.log("Subscribed successfully:", res);
       if (res?.status === 200) {
+        console.log("Subscribed successfully:", res);
         setState({ email: "", success: res.message, error: "" });
+      }else{
+        setState({ ...state, error: res?.message || "Subscription failed.", success: "" });
       }
     } catch (error) {
       console.error("Subscription error:", error);
@@ -45,6 +49,15 @@ const SubscribeNewsletter = () => {
         error: error?.data?.message || "Failed to subscribe. Please try again.",
         success: "",
       });
+    }finally {
+      // Clear messages after 1550ms
+      setTimeout(() => {
+        setState((prev) => ({
+          ...prev,
+          error: "",
+          success: "",
+        }));
+      }, 1550);
     }
   };
 
@@ -74,7 +87,7 @@ const SubscribeNewsletter = () => {
           type="submit"
           disabled={isLoading}
           className="h-10 px-4 py-2 bg-slate-950 text-white font-medium rounded-md transition-all 
-            hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1 hover:scale-110 hover:rotate-2
+            hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1 hover:scale-110 
             disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isLoading ? "Subscribing..." : "Subscribe"}

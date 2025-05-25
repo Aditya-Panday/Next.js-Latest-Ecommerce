@@ -56,12 +56,12 @@ const Footer = () => {
             <h4 className="font-medium">Contact Us</h4>
             <ul className="space-y-2 text-sm text-gray-400">
               <li>support@dotfits.com</li>
-              <li>+1 (555) 123-4567</li>
+              <li>+91 9899228654</li>
             </ul>
           </div>
         </div>
         <div className="mt-12 pt-8 border-t border-white/10 text-center text-sm text-gray-400">
-          © 2024 dotfits. All rights reserved.
+          © 2025 dotfits. All rights reserved.
         </div>
       </div>
     </footer>

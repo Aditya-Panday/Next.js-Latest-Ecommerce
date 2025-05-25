@@ -450,12 +450,6 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="paypal" id="paypal" />
-                    <Label htmlFor="paypal" className="cursor-pointer">
-                      PayPal
-                    </Label>
-                  </div>
 
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cash" id="cash" />

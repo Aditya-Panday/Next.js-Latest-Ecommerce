@@ -14,15 +14,12 @@ export async function GET(req) {
   const subParam = searchParams.get("sub");
   const sortParam = searchParams.get("price");
   const searchParam = searchParams.get("search");
-  
+
   try {
-    let query = supabase
-      .from("products")
-      .select("*", { count: "exact" });
+    let query = supabase.from("products").select("*", { count: "exact" });
 
     // Apply filters
     if (productId) query = query.eq("product_id", productId);
-
 
     if (categoryParam) {
       console.log("Category Param:", categoryParam); // Debugging line
@@ -70,7 +67,7 @@ export async function GET(req) {
     query = query.range(offset, offset + limit - 1);
 
     const { data: products, count, error } = await query;
-    
+
     if (error) throw error;
 
     let relatedProducts = [];
@@ -83,8 +80,23 @@ export async function GET(req) {
         .eq("product_id", productId)
         .single();
 
-      if (prodErr) throw prodErr;
+      console.log("Current Product:", currentProduct);
+      console.log("prodErr:", prodErr);
 
+      if (prodErr && prodErr.code !== "PGRST116") {
+        // throw only if it's not "no row found"
+        throw prodErr;
+      }
+
+      if (!currentProduct) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Product not found.",
+          },
+          { status: 404 }
+        );
+      }
       if (currentProduct?.sub_category && currentProduct?.category_name) {
         const { data: related, error: relatedErr } = await supabase
           .from("products")

@@ -9,6 +9,7 @@ import ReuseableSkelton from "../DynamicProductCard/ReuseableSkelton";
 import TabSection from "./TabSection";
 import AddReviewModal from "../AllModals/AddReviewModal";
 import ProductSkeltonPage from "./ProductSkeltonPage";
+import { useRouter } from "next/navigation";
 
 // Mock product data
 const product = {
@@ -64,20 +65,31 @@ const product = {
 };
 
 export default function ProductDetailPage({ id }) {
-  const { data: ProductDetail, isLoading: isProdLoading } =
-    useGetMainProductDataQuery({
-      productId: id,
-    });
+  const {
+    data: ProductDetail,
+    isLoading: isProdLoading,
+    error,
+    isError,
+  } = useGetMainProductDataQuery({
+    productId: id,
+  });
   const productData = ProductDetail?.products[0];
   const RelatedProducts = ProductDetail?.relatedProducts || [];
   const productReviews = ProductDetail?.productReview || [];
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   console.log("productReviews", productReviews);
-    const incrementQuantity = () =>
-      setQuantity((prev) => (prev < 6 ? prev + 1 : 6));
+  useEffect(() => {
+    // 🚨 Redirect to 404 if API says product not found
+    if (!isProdLoading && error?.status === 404) {
+      router.push("/404");
+    }
+  }, [isProdLoading, router, error]);
+  const incrementQuantity = () =>
+    setQuantity((prev) => (prev < 6 ? prev + 1 : 6));
   const decrementQuantity = () =>
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
@@ -101,13 +113,13 @@ export default function ProductDetailPage({ id }) {
   }, [productData]);
 
   return (
-      <div className="container mx-auto px-4 py-8">
-        {/* Breadcrumb */}
-        {isProdLoading ? (
-          <ProductSkeltonPage />
-        ) : (
-          <>
-            {/* Breadcrumb */}
+    <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumb */}
+      {isProdLoading || error ? (
+        <ProductSkeltonPage />
+      ) : (
+        <>
+          {/* Breadcrumb */}
             <nav className="flex mb-8 text-sm">
               <Link
                 href="/"
@@ -125,8 +137,8 @@ export default function ProductDetailPage({ id }) {
               <ChevronRight className="mx-2 h-5 w-5 text-gray-400" />
               <span className="text-gray-900">{productData?.product_name}</span>
             </nav>
-
-            {/* Product Details */}
+         
+          {/* Product Details */}
             <div className="grid md:grid-cols-2 gap-8 mb-16">
               {/* Product Image */}
               <div className="relative aspect-square">
@@ -247,128 +259,124 @@ export default function ProductDetailPage({ id }) {
                 </div>
               </div>
             </div>
-          </>
-        )}
+        </>
+      )}
 
-        {/* Tabs for Description and Specifications*/}
-        {isProdLoading ? (
-          <div className="flex items-center space-x-4">
-            <ReuseableSkelton width="100px" height="32px" className="rounded" />
-            <ReuseableSkelton width="100px" height="32px" className="rounded" />
-          </div>
-        ) : (
-          productData && <TabSection productData={productData} />
-        )}
-
-        {/* Product Reviews Section */}
-        <div className="mb-16">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">
-              {isProdLoading ? (
-                <ReuseableSkelton
-                  width="150px"
-                  height="45px"
-                  className="rounded-lg my-4"
-                />
-              ) : (
-                "Customer Reviews"
-              )}
-            </h2>
-            {!isProdLoading && (
-              <AddReviewModal
-                isModalOpen={isModalOpen}
-                setIsModalOpen={setIsModalOpen}
-                productId={productData?.product_id}
-                productName={productData?.product_name}
-              />
-            )}
-          </div>
-          <div className="space-y-6">
-            {isProdLoading ? (
-              // Show skeletons while loading
-              [...Array(3)].map((_, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <ReuseableSkelton width="80px" height="16px" />
-                    <ReuseableSkelton width="120px" height="16px" />
-                  </div>
-                  <ReuseableSkelton width="100%" height="40px" />
-                </div>
-              ))
-            ) : productReviews.length > 0 ? (
-              // Show actual reviews after loading
-              productReviews.map((review) => (
-                <div key={review.id} className="border-b pb-4">
-                  <div className="flex items-center mb-2">
-                    <div className="flex mr-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < review.stars
-                              ? "text-yellow-400 fill-yellow-400"
-                              : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="font-medium">{review.name}</span>
-                  </div>
-                  <p className="text-gray-600">{review.description}</p>
-                </div>
-              ))
-            ) : (
-              // Fallback if no reviews
-              <p>No review found</p>
-            )}
-          </div>
+      {/* Tabs for Description and Specifications*/}
+      {isProdLoading ? (
+        <div className="flex items-center space-x-4">
+          <ReuseableSkelton width="100px" height="32px" className="rounded" />
+          <ReuseableSkelton width="100px" height="32px" className="rounded" />
         </div>
+      ) : (
+        productData && <TabSection productData={productData} />
+      )}
 
-        {/* Related Products */}
-        {isProdLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, idx) => (
+      {/* Product Reviews Section */}
+      <div className="mb-16">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">
+            {isProdLoading || error ? (
               <ReuseableSkelton
-                key={idx}
-                width="100%"
-                height="350px"
-                className="rounded-lg"
+                width="150px"
+                height="45px"
+                className="rounded-lg my-4"
               />
+            ) : (
+              "Customer Reviews"
+            )}
+          </h2>
+          {!isProdLoading || error && (
+            <AddReviewModal
+              isModalOpen={isModalOpen}
+              setIsModalOpen={setIsModalOpen}
+              productId={productData?.product_id}
+              productName={productData?.product_name}
+            />
+          )}
+        </div>
+        <div className="space-y-6">
+          {isProdLoading || error ? (
+            // Show skeletons while loading
+            [...Array(3)].map((_, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <ReuseableSkelton width="80px" height="16px" />
+                  <ReuseableSkelton width="120px" height="16px" />
+                </div>
+                <ReuseableSkelton width="100%" height="40px" />
+              </div>
+            ))
+          ) : productReviews.length > 0 ? (
+            // Show actual reviews after loading
+            productReviews.map((review) => (
+              <div key={review.id} className="border-b pb-4">
+                <div className="flex items-center mb-2">
+                  <div className="flex mr-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < review.stars
+                            ? "text-yellow-400 fill-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="font-medium">{review.name}</span>
+                </div>
+                <p className="text-gray-600">{review.description}</p>
+              </div>
+            ))
+          ) : (
+            // Fallback if no reviews
+            <p>No review found</p>
+          )}
+        </div>
+      </div>
+
+      {/* Related Products */}
+      {isProdLoading ? (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <ReuseableSkelton
+              key={idx}
+              width="100%"
+              height="350px"
+              className="rounded-lg"
+            />
+          ))}
+        </div>
+      ) : (
+        <div>
+          {RelatedProducts.length > 0 && (
+            <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {RelatedProducts.map((relatedProduct, index) => (
+              <div key={relatedProduct.id || index} className="group">
+                <Link href={`/product-detail/${relatedProduct.product_id}`}>
+                  <div className="relative aspect-square mb-2 overflow-hidden rounded-lg">
+                    <Image
+                      src={relatedProduct?.image_url?.[0] || "/placeholder.svg"}
+                      alt={relatedProduct?.name || "Related product image"}
+                      fill
+                      sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                      className="object-cover transition-transform group-hover:scale-105"
+                    />
+                  </div>
+
+                  <h3 className="font-medium text-sm mb-1">
+                    {relatedProduct.name}
+                  </h3>
+                  <p className="text-gray-600">₹{relatedProduct.final_price}</p>
+                </Link>
+              </div>
             ))}
           </div>
-        ) : (
-          <div>
-            {RelatedProducts.length > 0 && (
-              <h2 className="text-2xl font-bold mb-6">Related Products</h2>
-            )}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {RelatedProducts.map((relatedProduct, index) => (
-                <div key={relatedProduct.id || index} className="group">
-                  <Link href={`/product-detail/${relatedProduct.product_id}`}>
-                    <div className="relative aspect-square mb-2 overflow-hidden rounded-lg">
-                      <Image
-                        src={
-                          relatedProduct?.image_url?.[0] || "/placeholder.svg"
-                        }
-                        alt={relatedProduct?.name || "Related product image"}
-                        fill
-                        sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
-                    </div>
-
-                    <h3 className="font-medium text-sm mb-1">
-                      {relatedProduct.name}
-                    </h3>
-                    <p className="text-gray-600">
-                      ₹{relatedProduct.final_price}
-                    </p>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { email } = await req.json();
+    let { email } = await req.json();
     const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-
+    email = email.trim().toLowerCase();
     if (!email || !emailRegex.test(email)) {
       return NextResponse.json(
         { status: false, message: "Invalid or missing email." },
@@ -13,18 +13,27 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Check if email already exists
+    // ✅ Check if email already exists safely
     const { data: existing, error: existError } = await supabase
       .from("subscribers")
       .select("id")
       .eq("email", email)
-      .single();
+      .maybeSingle(); // <-- prevents throw if no row found
+
+    if (existError) {
+      console.error("Exist check error:", existError.message);
+      return NextResponse.json(
+        { status: false, message: "Database error. Please try again." },
+        { status: 500 }
+      );
+    }
 
     if (existing) {
-      return NextResponse.json(
-        { status: false, message: "This email is already subscribed." },
-        { status: 400 }
-      );
+      console.error("Exist check error:", existing);
+      return NextResponse.json({
+        status: 400,
+        message: "This email is already subscribed.",
+      });
     }
 
     // ✅ Insert new subscriber
@@ -34,16 +43,16 @@ export async function POST(req) {
 
     if (insertError) throw insertError;
 
-    return NextResponse.json(
-      { status: true, message: "Thanks for subscribing." },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      status: 200,
+      message: "Thanks for subscribing.",
+    });
   } catch (error) {
     console.error("POST Error:", error);
-    return NextResponse.json(
-      { status: false, message: "Server error. Please try again later." },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      status: 500,
+      message: "Server error. Please try again later.",
+    });
   }
 }
 
