@@ -37,7 +37,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import HomeLayout from "@/components/HomeLayout/HomeLayout";
 
 // Updated cart items data
 const cartItems = [
@@ -145,7 +144,6 @@ export default function CheckoutPage() {
   };
 
   return (
-    <HomeLayout>
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Simplified Checkout Progress Indicator */}
         <div className="mb-10">
@@ -452,12 +450,6 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="paypal" id="paypal" />
-                    <Label htmlFor="paypal" className="cursor-pointer">
-                      PayPal
-                    </Label>
-                  </div>
 
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="cash" id="cash" />
@@ -520,7 +512,6 @@ export default function CheckoutPage() {
             </Card>
           </div>
         </div>
-      </div>{" "}
-    </HomeLayout>
+      </div>
   );
 }

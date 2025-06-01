@@ -25,11 +25,12 @@ export default function Home() {
   return (
     <HomeLayout>
       {/* Main Content */}
+
       <main>
         <section className="relative h-[47vh] bg-theme-50">
           <div className="container h-full flex items-center">
             <div className="max-w-2xl space-y-6 z-10">
-              <h1 className="text-6xl font-bold">Summer Collection 2024</h1>
+              <h1 className="text-6xl font-bold">Summer Collection 2025</h1>
               <p className="text-xl text-gray-600">
                 Discover our latest arrivals and trending styles
               </p>

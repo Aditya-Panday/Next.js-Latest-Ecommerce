@@ -1,83 +1,87 @@
-import db from "@/utils/db";
+import { supabase } from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
-    const { email } = await req.json();
-
-    // ✅ Email validation
+    let { email } = await req.json();
     const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-    if (!email) {
-      return NextResponse.json({ message: "Email required." }, { status: 400 });
-    }
+    email = email.trim().toLowerCase();
     if (!email || !emailRegex.test(email)) {
       return NextResponse.json(
-        { message: "Invalid email format." },
+        { status: false, message: "Invalid or missing email." },
         { status: 400 }
       );
     }
 
-    // ✅ Check if email already exists
-    const checkSubscriber = `SELECT COUNT(*) AS count FROM subscribers WHERE email = ?`;
-    const [result] = await db.query(checkSubscriber, [email]);
+    // ✅ Check if email already exists safely
+    const { data: existing, error: existError } = await supabase
+      .from("subscribers")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle(); // <-- prevents throw if no row found
 
-    if (result[0].count > 0) {
+    if (existError) {
+      console.error("Exist check error:", existError.message);
       return NextResponse.json(
-        { message: "This email already exists." },
-        { status: 400 }
+        { status: false, message: "Database error. Please try again." },
+        { status: 500 }
       );
     }
 
-    // ✅ Insert the subscriber (Use parameterized query to prevent SQL injection)
-    const addSubscriber = `INSERT INTO subscribers (email) VALUES (?)`;
-    await db.query(addSubscriber, [email]);
+    if (existing) {
+      console.error("Exist check error:", existing);
+      return NextResponse.json({
+        status: 400,
+        message: "This email is already subscribed.",
+      });
+    }
 
-    return NextResponse.json(
-      { status: 200, message: "Thanks for register." },
-      { status: 200 }
-    );
+    // ✅ Insert new subscriber
+    const { error: insertError } = await supabase
+      .from("subscribers")
+      .insert([{ email }]);
+
+    if (insertError) throw insertError;
+
+    return NextResponse.json({
+      status: 200,
+      message: "Thanks for subscribing.",
+    });
   } catch (error) {
-    console.error("Error:", error);
-    return NextResponse.json(
-      { message: "An internal server error occurred" },
-      { status: 500 }
-    );
+    console.error("POST Error:", error);
+    return NextResponse.json({
+      status: 500,
+      message: "Server error. Please try again later.",
+    });
   }
 }
 
 export async function GET(req) {
   try {
-    // ✅ Parse query params
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const offset = (page - 1) * limit;
 
-    // ✅ Fetch data ordered by latest subscription date
-    const getSubscribers = `
-      SELECT * FROM subscribers 
-      ORDER BY id DESC 
-      LIMIT ? OFFSET ?
-    `;
-    const [subscribersData] = await db.query(getSubscribers, [limit, offset]);
+    const { data, count, error } = await supabase
+      .from("subscribers")
+      .select("*", { count: "exact" })
+      .order("id", { ascending: false })
+      .range(offset, offset + limit - 1);
 
-    // ✅ Get total count (without offset/limit)
-    const countQuery = `SELECT COUNT(*) AS total FROM subscribers`;
-    const [countResult] = await db.query(countQuery);
-
-    const total = countResult[0]?.total || 0;
+    if (error) throw error;
 
     return NextResponse.json({
       status: true,
-      data: subscribersData,
-      total,
+      data,
+      total: count,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil((count || 0) / limit),
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("GET Error:", error);
     return NextResponse.json(
-      { message: "An internal server error occurred" },
+      { status: false, message: "Server error. Please try again later." },
       { status: 500 }
     );
   }

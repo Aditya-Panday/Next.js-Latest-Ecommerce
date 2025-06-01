@@ -4,7 +4,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useGetMainProductDataQuery } from "@/lib/features/productApi/productMainSlice";
 import { useGetFiltersDataQuery } from "@/lib/features/productFilters/productFilterSlice";
 import CategoryPage from "@/components/ShopPage/ShopPagesDesign";
-import HomeLayout from "@/components/HomeLayout/HomeLayout";
 
 const Shop = () => {
   const searchParams = useSearchParams();
@@ -24,7 +23,8 @@ const Shop = () => {
     subcategory: [],
     priceBy: "",
   });
-  console.log("filters", filters);
+  const [refetchKey, setRefetchKey] = useState(0);
+
   useEffect(() => {
     const getInitialFilters = () => {
       const category = searchParams.get("category")?.split(",") || [];
@@ -39,9 +39,9 @@ const Shop = () => {
     setAppliedFilters(initial); // <-- Apply filters only on initial render
   }, [searchParams]);
 
-   // 🔁 Debounce search input
-   
-   useEffect(() => {
+  // 🔁 Debounce search input
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
       setFilters((prev) => ({ ...prev, search: filters.searchTerm }));
     }, 500);
@@ -73,37 +73,45 @@ const Shop = () => {
     router.push(`?${query.toString()}`);
     // Trigger API re-fetch
     setAppliedFilters({ ...filters });
+    setRefetchKey((prev) => prev + 1);
   };
 
   // Fetch products based on filters
   // ✅ Use filters for actual API call
   const { data: productCollection, isLoading: isProdLoading } =
-    useGetMainProductDataQuery({
-      category: appliedFilters.category.join(","),
-      sub: appliedFilters.subcategory.join(","),
-      brand: appliedFilters.brand.join(","),
-      price: appliedFilters.priceBy,
-      search: filters.search,
-      page: 1,
-      limit: 10,
-    });
+    useGetMainProductDataQuery(
+      {
+        category: appliedFilters.category.join(","),
+        sub: appliedFilters.subcategory.join(","),
+        brand: appliedFilters.brand.join(","),
+        price: appliedFilters.priceBy,
+        search: filters.search,
+        page: 1,
+        limit: 10,
+      },
+      {
+        skip: !appliedFilters, // optional safety
+        refetchOnMountOrArgChange: true, // force refetch if needed
+        // 👇 this ensures re-fetch even if args don't change
+        pollingInterval: 0, // avoid polling
+        forceRefetch: true, // aggressive but ensures call
+      }
+    );
   // Fetch filters data..
   const { data: productFilters, isLoading: isFilterLoading } =
     useGetFiltersDataQuery();
 
   return (
-    <HomeLayout>
-      <CategoryPage
-        productCollection={productCollection}
-        isProdLoading={isProdLoading}
-        productFilters={productFilters?.data}
-        isFilterLoading={isFilterLoading}
-        filters={filters}
-        setFilters={setFilters}
-        handleCheckboxChange={handleCheckboxChange}
-        applyFilters={applyFilters}
-      />
-    </HomeLayout>
+    <CategoryPage
+      productCollection={productCollection}
+      isProdLoading={isProdLoading}
+      productFilters={productFilters?.data}
+      isFilterLoading={isFilterLoading}
+      filters={filters}
+      setFilters={setFilters}
+      handleCheckboxChange={handleCheckboxChange}
+      applyFilters={applyFilters}
+    />
   );
 };
 

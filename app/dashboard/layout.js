@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Menu, LogOut } from "lucide-react";
 import AdminLAyout from "@/components/AdminLayout/AdminLayout";
 
-const Layout = ({ children }) => {
+export default function DashboardLayout({
+  children,
+}) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
   return (
     <div className="flex h-screen bg-gray-100 text-black">
       <AdminLAyout isOpen={isSidebarOpen} />
@@ -34,7 +35,4 @@ const Layout = ({ children }) => {
         <main className="flex-1 p-8 overflow-y-auto">{children}</main>
       </div>
     </div>
-  );
-};
-
-export default Layout;
+  );}

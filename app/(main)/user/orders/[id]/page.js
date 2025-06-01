@@ -104,7 +104,7 @@ const getOrderById = (id) => {
   };
 };
 
-const Page = ({ params }) => {
+const Page = async ({ params }) => {
   const statusIcon = {
     "Order Placed": <Clock className="h-5 w-5 text-gray-500" />,
     "Payment Confirmed": <CreditCard className="h-5 w-5 text-purple-500" />,
@@ -113,7 +113,7 @@ const Page = ({ params }) => {
     Delivered: <CheckCircle className="h-5 w-5 text-green-500" />,
   };
 
-  const order = getOrderById(params.id);
+  const order = await getOrderById(params?.id);
 
   return (
     <div className="container mx-auto px-4 py-6 md:px-6">

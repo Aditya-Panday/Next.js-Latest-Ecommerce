@@ -1,11 +1,10 @@
-import db from "@/utils/db";
+import supabase from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     const { name } = await req.json();
 
-    // Validate required fields
     if (!name) {
       return NextResponse.json(
         { message: "Required brand name." },
@@ -13,29 +12,52 @@ export async function POST(req) {
       );
     }
 
-    // Check if brand name exists
-    const checkBrand = `SELECT COUNT(*) AS count FROM maincategory WHERE name = ?`;
-    const [result] = await db.query(checkBrand, [name]);
+    // Check if category already exists
+    const { data: existing, error: checkError } = await supabase
+      .from("maincategory")
+      .select("id")
+      .eq("name", name)
+      .limit(1);
 
-    if (result[0].count > 0) {
+    if (checkError) {
+      console.error("Supabase select error:", checkError);
+      return NextResponse.json(
+        { message: "Internal server error" },
+        { status: 500 }
+      );
+    }
+
+    if (existing.length > 0) {
       return NextResponse.json(
         { message: "This category already exists." },
         { status: 400 }
       );
     }
 
-    // Add the new brand
-    const addBrand = `INSERT INTO maincategory (name) VALUES (?)`;
-    await db.query(addBrand, [name]);
+    // Insert new category
+    const { error: insertError } = await supabase
+      .from("maincategory")
+      .insert([{ name }]);
 
-    return NextResponse.json({
-      status: true,
-      message: "Brand created successfully",
-    });
-  } catch (error) {
-    console.error("Error:", error);
+    if (insertError) {
+      console.error("Supabase insert error:", insertError);
+      return NextResponse.json(
+        { message: "Internal server error" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
-      { message: "An internal server error occurred" },
+      {
+        status: true,
+        message: "Brand created successfully",
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("POST Error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
       { status: 500 }
     );
   }
@@ -45,39 +67,67 @@ export async function DELETE(req) {
   try {
     const { id } = await req.json();
 
-    // Validate required fields
     if (!id) {
-      return NextResponse.json({
-        message: "Product id required.",
-        status: 400,
-      });
+      return NextResponse.json(
+        { message: "Product id required." },
+        { status: 400 }
+      );
     }
 
-    // Check if brand exists
-    const checkBrandExist = `SELECT COUNT(*) AS count FROM maincategory WHERE id = ?`;
-    const [result] = await db.query(checkBrandExist, [id]);
+    // Check if category exists
+    const { data: existing, error: checkError } = await supabase
+      .from("maincategory")
+      .select("id")
+      .eq("id", id)
+      .limit(1);
 
-    if (result[0].count == 0) {
-      return NextResponse.json({ message: "Id doesn't exist.", status: 404 });
+    if (checkError) {
+      console.error("Supabase select error:", checkError);
+      return NextResponse.json(
+        { message: "Internal server error" },
+        { status: 500 }
+      );
     }
 
-    // Delete the brand
-    const deleteBrand = `DELETE FROM maincategory WHERE id = ?`;
-    await db.query(deleteBrand, [id]);
+    if (existing.length === 0) {
+      return NextResponse.json(
+        { message: "Id doesn't exist." },
+        { status: 404 }
+      );
+    }
 
-    return NextResponse.json({
-      status: 200,
-      message: "Brand deleted successfully",
-    });
-  } catch (error) {
-    console.error("Error:", error);
+    // Delete category
+    const { error: deleteError } = await supabase
+      .from("maincategory")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error("Supabase delete error:", deleteError);
+      return NextResponse.json(
+        { message: "Internal server error" },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { message: "An internal server error occurred" },
+      {
+        status: true,
+        message: "Brand deleted successfully",
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("DELETE Error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
 export async function OPTIONS() {
-  return NextResponse.json({ message: "Method Not Allowed" }, { status: 405 });
+  return NextResponse.json(
+    { message: "Method Not Allowed" },
+    { status: 405 }
+  );
 }

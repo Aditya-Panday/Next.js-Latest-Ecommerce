@@ -1,11 +1,11 @@
-import db from "@/utils/db";
+import { supabase } from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     const { name } = await req.json();
 
-    // Validate required fields.
+    // Validate required field
     if (!name) {
       return NextResponse.json(
         { message: "Subcategory name is required." },
@@ -13,27 +13,48 @@ export async function POST(req) {
       );
     }
 
-    // Check if subcategory name exists.
-    const checkSub = `SELECT COUNT(*) AS count FROM subcategory WHERE name = ?`;
-    const [result] = await db.query(checkSub, [name]);
+    // Check if subcategory name exists
+    const { data: existingSubcategory, error: checkError } = await supabase
+      .from("subcategory")
+      .select("id")
+      .eq("name", name)
+      .single();
 
-    if (result[0].count > 0) {
+    if (existingSubcategory) {
       return NextResponse.json(
         { message: "This Subcategory name already exists." },
         { status: 400 }
       );
     }
 
+    if (checkError && checkError.code !== "PGRST116") {
+      // Handle any Supabase error that isn't "no rows found"
+      console.error("Supabase check error:", checkError);
+      return NextResponse.json(
+        { message: "Failed to check existing subcategory." },
+        { status: 500 }
+      );
+    }
+
     // Add the new subcategory
-    const addSub = `INSERT INTO subcategory (name) VALUES (?)`;
-    await db.query(addSub, [name]);
+    const { error: insertError } = await supabase
+      .from("subcategory")
+      .insert([{ name }]);
+
+    if (insertError) {
+      console.error("Supabase insert error:", insertError);
+      return NextResponse.json(
+        { message: "Failed to create subcategory." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       status: true,
       message: "Subcategory created successfully",
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Unexpected error:", error);
     return NextResponse.json(
       { message: "An internal server error occurred" },
       { status: 500 }
@@ -41,39 +62,62 @@ export async function POST(req) {
   }
 }
 
+
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
+    const id = parseInt(searchParams.get("id"));
 
-    let id = parseInt(searchParams.get("id")) || "";
-
-    // Validate required fields
-
+    // Validate required field
     if (!id) {
-      return NextResponse.json({
-        message: "Product id required.",
-        status: 400,
-      });
+      return NextResponse.json(
+        { message: "Subcategory id required." },
+        { status: 400 }
+      );
     }
 
-    // Check if brand exists
-    const checkSubExist = `SELECT COUNT(*) AS count FROM subcategory WHERE id = ?`;
-    const [result] = await db.query(checkSubExist, [id]);
+    // Check if subcategory exists
+    const { data: existing, error: fetchError } = await supabase
+      .from("subcategory")
+      .select("id")
+      .eq("id", id)
+      .single();
 
-    if (result[0].count == 0) {
-      return NextResponse.json({ message: "Id doesn't exist.", status: 404 });
+    if (fetchError && fetchError.code !== "PGRST116") {
+      console.error("Supabase fetch error:", fetchError);
+      return NextResponse.json(
+        { message: "Failed to check subcategory existence." },
+        { status: 500 }
+      );
     }
 
-    // Delete the brand
-    const deleteSub = `DELETE FROM subcategory WHERE id = ?`;
-    await db.query(deleteSub, [id]);
+    if (!existing) {
+      return NextResponse.json(
+        { message: "Id doesn't exist." },
+        { status: 404 }
+      );
+    }
+
+    // Delete the subcategory
+    const { error: deleteError } = await supabase
+      .from("subcategory")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error("Supabase delete error:", deleteError);
+      return NextResponse.json(
+        { message: "Failed to delete subcategory." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       status: 200,
       message: "Subcategory deleted successfully",
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Unexpected error:", error);
     return NextResponse.json(
       { message: "An internal server error occurred" },
       { status: 500 }
@@ -81,53 +125,52 @@ export async function DELETE(req) {
   }
 }
 
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
 
-    let page = parseInt(searchParams.get("page")) || 1;
-    let limit = parseInt(searchParams.get("limit")) || 10;
-    let offset = (page - 1) * limit;
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 10;
+    const offset = (page - 1) * limit;
 
-    let status = searchParams.get("status");
-    let search = searchParams.get("search");
+    const status = searchParams.get("status");
+    const search = searchParams.get("search");
 
-    let whereClause = [];
-    let values = [];
+    let query = supabase.from("subcategory").select("*", { count: "exact" });
 
-    if (status !== null && (status === "0" || status === "1")) {
-      whereClause.push("status = ?");
-      values.push(parseInt(status));
+    // Apply filters
+    if (status === "0" || status === "1") {
+      query = query.eq("status", parseInt(status));
     }
 
     if (search) {
-      whereClause.push("name LIKE ?");
-      values.push(`%${search}%`);
+      query = query.ilike("name", `%${search}%`);
     }
 
-    let whereSQL = whereClause.length
-      ? `WHERE ${whereClause.join(" AND ")}`
-      : "";
+    // Apply ordering and pagination
+    query = query.order("id", { ascending: false }).range(offset, offset + limit - 1);
 
-    const getSubcategory = `SELECT * FROM subcategory ${whereSQL} ORDER BY id DESC LIMIT ? OFFSET ?`;
+    // Execute query
+    const { data, count, error } = await query;
 
-    values.push(limit, offset);
-    const [subcategory] = await db.query(getSubcategory, values);
-
-    const countQuery = `SELECT COUNT(*) AS total FROM subcategory ${whereSQL}`;
-    const [countResult] = await db.query(countQuery, values.slice(0, -2)); // Last 2 params limit/offset hata rahe hain
-
-    const total = countResult[0]?.total || 0;
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json(
+        { message: "Failed to fetch subcategories" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       status: true,
-      data: subcategory,
-      total,
+      data,
+      total: count || 0,
       page,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil((count || 0) / limit),
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Unexpected error:", error);
     return NextResponse.json(
       { message: "An internal server error occurred" },
       { status: 500 }
