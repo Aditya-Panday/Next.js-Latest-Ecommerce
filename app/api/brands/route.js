@@ -1,10 +1,10 @@
-import { supabase } from "@/utils/supabaseClient";
+import supabase from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
     const { name } = await req.json();
-
+    
     if (!name) {
       return NextResponse.json(
         { message: "Brand name is required." },

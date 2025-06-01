@@ -1,4 +1,4 @@
-import { supabase } from "@/utils/supabaseClient";
+import supabase from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
 
 export async function GET(req) {
@@ -22,19 +22,15 @@ export async function GET(req) {
     if (productId) query = query.eq("product_id", productId);
 
     if (categoryParam) {
-      console.log("Category Param:", categoryParam); // Debugging line
       const categories = categoryParam.split(",").filter(Boolean);
       if (categories.length === 1) {
-        console.log("Single Category:", categories[0]);
         query = query.ilike("category_name", categories);
       } else if (categories.length > 1) {
-        console.log("Multiple Categories:", categories);
         query = query.in("category_name", categories);
       }
     }
 
     if (subParam) {
-      console.log("Sub Param:", subParam); // Debugging line
       const subs = subParam.split(",").filter(Boolean);
       if (subs.length) {
         query = query.in("sub_category", subs);
@@ -42,7 +38,6 @@ export async function GET(req) {
     }
 
     if (brandParam) {
-      console.log("Brand Param:", brandParam); // Debugging line
       const brands = brandParam.split(",").filter(Boolean);
       if (brands.length) {
         query = query.in("brand_name", brands);
@@ -50,7 +45,6 @@ export async function GET(req) {
     }
 
     if (searchParam) {
-      console.log("Search Param:", searchParam); // Debugging line
       query = query.ilike("product_name", `%${searchParam}%`);
     }
 
@@ -79,10 +73,7 @@ export async function GET(req) {
         .select("sub_category, category_name")
         .eq("product_id", productId)
         .single();
-
-      console.log("Current Product:", currentProduct);
-      console.log("prodErr:", prodErr);
-
+        
       if (prodErr && prodErr.code !== "PGRST116") {
         // throw only if it's not "no row found"
         throw prodErr;

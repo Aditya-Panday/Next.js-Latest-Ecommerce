@@ -11,7 +11,6 @@ const Page = () => {
   });
 
   const { data, isLoading } = useGetSubscriberQuery(filters);
-  console.log(data);
   return (
     <>
       {isLoading ? (
