@@ -7,6 +7,8 @@ import Image from "next/image";
 import Footer from "./Footer";
 import CartSidebar from "./CartSidebar";
 import MenuSidebar from "./MenuSidebar";
+import { useSelector } from "react-redux";
+import { selectCartItems } from "@/lib/features/cartData/cartSlice";
 
 const HomeLayout = ({ children }) => {
   const pathname = usePathname(); // Get current route
@@ -14,6 +16,7 @@ const HomeLayout = ({ children }) => {
     isMenuOpen: false,
     isCartOpen: false,
   });
+  const cartItems = useSelector(selectCartItems);
 
   useEffect(() => {
     if (state.isCartOpen || state.isMenuOpen) {
@@ -84,11 +87,19 @@ const HomeLayout = ({ children }) => {
               <button className="p-2">
                 <Heart className="h-5 w-5 text-black hover:text-red-500" />
               </button>
-              <button className="p-2">
-                <ShoppingCart
-                  className="h-5 w-5 text-black hover:text-red-500"
-                  onClick={() => toggleState("isCartOpen", true)}
-                />
+              <button
+                className="p-2 relative"
+                onClick={() => toggleState("isCartOpen", true)}
+              >
+                <ShoppingCart className="h-5 w-5 text-black hover:text-red-500" />
+                {cartItems.length > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center "
+                    style={{ minWidth: 20, minHeight: 20 }}
+                  >
+                    {cartItems?.length}
+                  </span>
+                )}
               </button>
               <button className="p-2">
                 <User className="h-5 w-5 text-black hover:text-red-500" />

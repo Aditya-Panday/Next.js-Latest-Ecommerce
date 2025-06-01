@@ -338,12 +338,13 @@ export default function ProductDetailPage({ id }) {
                   </Button>
                 </div>
                 {extraStates.added ? (
-                  <Link
-                    href="/checkout"
-                    className="flex-1 bg-emerald-500 hover:bg-emerald-700 text-white"
-                  >
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Go to Cart
+                  <Link href="/checkout" passHref legacyBehavior>
+                    <Button
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-700 text-white"
+                    >
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      Go to Cart
+                    </Button>
                   </Link>
                 ) : (
                   <Button
