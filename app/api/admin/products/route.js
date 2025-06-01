@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { productSchema } from "@/utils/zodSchemas";
-import { supabase } from "@/utils/supabaseClient";
+import supabase from "@/utils/supabaseClient";
 
 // POST /api/products - Create a new product
 export async function POST(req) {

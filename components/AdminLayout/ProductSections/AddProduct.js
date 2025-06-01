@@ -110,7 +110,6 @@ export default function AddProduct({
           autoClose: 1500,
         });
       }
-      console.log("uploadedKey", uploadedKey);
 
       setFormState((prevState) => ({
         ...prevState,

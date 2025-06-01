@@ -1,4 +1,4 @@
-import { supabase } from "@/utils/supabaseClient";
+import supabase from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -18,7 +18,6 @@ export async function POST(req) {
       .select("product_id")
       .eq("product_id", productId)
       .single(); // Expecting one product
-    console.log("product", product);
     
     if (productError) {
       if (productError.code === "PGRST116") {

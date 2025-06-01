@@ -22,7 +22,6 @@ const Product = () => {
     limit: formState.limit,
   });
 
-  console.log("form", formState);
 
   return (
     <>

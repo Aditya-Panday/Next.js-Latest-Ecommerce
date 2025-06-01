@@ -1,16 +1,12 @@
+import supabase from "@/utils/supabaseClient";
 import { NextResponse } from "next/server";
-import { supabase } from "@/utils/supabaseClient";
 
 export async function POST(request) {
     try {
       const body = await request.json();
-    //   console.log("body: ", body);
-  
       // Clerk user object
       const eventType = body.type;
-    //   console.log("eventType: ", eventType);
       const user = body.data;
-    //   console.log("user: ", user);
 
   
       if (eventType === "user.created") {

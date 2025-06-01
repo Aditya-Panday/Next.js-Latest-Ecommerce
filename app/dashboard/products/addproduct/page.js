@@ -28,12 +28,10 @@ const Page = () => {
     stock: "1",
   });
 
-  // console.log("fm", formState)
   const sizes = sizesEnum.map((size) => ({ value: size, label: size }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // console.log("validation test");
     const validationResult = productSchema.safeParse(formState)
     if (!validationResult.success) {
       const newErrors = {};
@@ -50,7 +48,6 @@ const Page = () => {
 
     try {
       const result = await addProduct(formState).unwrap(); // .unwrap() will throw if error
-      // console.log("API success:", result);
       toast.success("Product added successfully.", {
         autoClose: 2000,
       });

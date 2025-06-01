@@ -126,8 +126,5 @@ export async function DELETE(req) {
 }
 
 export async function OPTIONS() {
-  return NextResponse.json(
-    { message: "Method Not Allowed" },
-    { status: 405 }
-  );
+  return NextResponse.json({ message: "Method Not Allowed" }, { status: 405 });
 }
