@@ -13,6 +13,7 @@ import {
   X,
   Store,
   BotMessageSquare,
+  LogOutIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -29,13 +30,14 @@ const navItems = [
 
 const MenuSidebar = ({ setIsMenuOpen }) => {
   const pathname = usePathname();
-  const { signOut, user } = useClerk();
-  console.log("user", user);
+  const { signOut } = useClerk();
+  // const { signOut, user } = useClerk();
+  // console.log("user", user);
 
   return (
     <div
       className="fixed inset-0 bg-black/70 z-50"
-      onClick={() => setIsMenuOpen(false)} // Close on outer click
+      onClick={() => setIsMenuOpen(false)} 
     >
       <div
         className="bg-white w-64 h-full  shadow-lg text-black"
@@ -43,23 +45,14 @@ const MenuSidebar = ({ setIsMenuOpen }) => {
       >
         {/* Menu Content */}
         <div className="flex h-16 items-center border-b px-2 justify-between">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <Button variant="default">Sign In</Button>
-            </SignInButton>
-          </SignedOut>
-
-          <SignedIn>
-            <UserButton afterSwitchSessionUrl="/" />
-            <Button
-              variant="default"
-              onClick={() => {
-                signOut();
-              }}
-            >
-              Sign out
-            </Button>
-          </SignedIn>
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-semibold"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <ShoppingBag className="h-6 w-6" />
+            <span>Dotfit Store</span>
+          </Link>
 
           <div className="flex items-center gap-4">
             <button className="p-2" onClick={() => setIsMenuOpen(false)}>
@@ -74,7 +67,7 @@ const MenuSidebar = ({ setIsMenuOpen }) => {
               href={item.href}
               className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 pathname === item.href
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-slate-900 text-white"
                   : "hover:bg-muted"
               }`}
             >
@@ -82,6 +75,15 @@ const MenuSidebar = ({ setIsMenuOpen }) => {
               {item.name}
             </Link>
           ))}
+          <SignedIn>
+            <button
+              onClick={() => signOut()}
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted text-red-600"
+            >
+              <LogOutIcon className="h-4 w-4" />
+              Sign out
+            </button>
+          </SignedIn>
         </nav>
       </div>
     </div>
