@@ -11,11 +11,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectCartItems } from "@/lib/features/cartData/cartSlice";
 import { selectMounted, setMounted } from "@/lib/features/mounted/mountedSlice";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { Button } from "../ui/button";
 
 const HomeLayout = ({ children }) => {
   const dispatch = useDispatch();
-  const pathname = usePathname(); // Get current route
+  const pathname = usePathname(); 
   const [state, setState] = useState({
     isMenuOpen: false,
     isCartOpen: false,

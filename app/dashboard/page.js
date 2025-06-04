@@ -37,7 +37,7 @@ const Page = () => {
             <p className="text-sm text-gray-500">Total revenue this month</p>
           </div>
           <div>
-            <p className="text-4xl font-bold">$12,345</p>
+            <p className="text-4xl font-bold">₹12,345</p>
           </div>
         </div>
 

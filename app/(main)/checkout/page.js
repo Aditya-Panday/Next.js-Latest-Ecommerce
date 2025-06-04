@@ -97,7 +97,7 @@ export default function CheckoutPage() {
     (sum, item) => sum + (item.price - item.final_price) * item.quantity,
     0
   );
-  const shipping = 5.99;
+  const shipping = 40;
   const subtotalAfterDiscount = subtotal - totalDiscount;
   const total = subtotalAfterDiscount + shipping;
   // Add new address
@@ -126,58 +126,60 @@ export default function CheckoutPage() {
       <div className="mb-10">
         <div className="flex justify-center items-center">
           <div className="relative flex items-center justify-between w-full max-w-3xl">
-            {checkoutSteps.map((step, index) => (
-              <div
-                key={index}
-                className="flex flex-col items-center relative z-10"
-              >
-                {/* Step circle */}
+            {checkoutSteps.map((step, index) => {
+              const currentIndex = checkoutSteps.findIndex(
+                (s) => s.id === currentStep
+              );
+              const isCompleted = index < currentIndex;
+              const isActive = step.id === currentStep;
+
+              return (
                 <div
-                  className={`flex items-center justify-center w-12 h-12 rounded-full border-2 ${
-                    step.id === currentStep
-                      ? "bg-primary text-primary-foreground"
-                      : checkoutSteps.findIndex((s) => s.id === currentStep) >
-                        checkoutSteps.findIndex((s) => s.id === step.id)
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-background text-muted-foreground"
-                  }`}
+                  key={index}
+                  className="flex flex-col items-center relative z-10"
                 >
-                  <step.icon className="h-6 w-6" />
+                  {/* Step circle */}
+                  <div
+                    className={`flex items-center justify-center w-12 h-12 rounded-full border-2 transition-colors ${
+                      isActive || isCompleted
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "bg-gray-100 text-gray-400 border-gray-300"
+                    }`}
+                  >
+                    <step.icon className="h-6 w-6" />
+                  </div>
+
+                  {/* Step label */}
+                  <span
+                    className={`mt-2 text-sm font-medium transition-colors ${
+                      isActive || isCompleted
+                        ? "text-slate-900"
+                        : "text-gray-400"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
                 </div>
+              );
+            })}
 
-                {/* Step label */}
-                <span
-                  className={`mt-2 text-sm font-medium ${
-                    step.id === currentStep
-                      ? "text-primary"
-                      : checkoutSteps.findIndex((s) => s.id === currentStep) >
-                        checkoutSteps.findIndex((s) => s.id === step.id)
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {step.label}
-                </span>
-              </div>
-            ))}
+            {/* Connector lines - shows between the circles */}
+            <div className="absolute top-[33%] left-0 w-[95%] h-[1.5px] -translate-y-1/2  flex">
+              {[0, 1].map((i) => {
+                const currentIndex = checkoutSteps.findIndex(
+                  (s) => s.id === currentStep
+                );
+                const isFilled = currentIndex >= i + 1; // show black for completed connections
 
-            {/* Connector lines - rendered separately to ensure they appear behind the circles */}
-            <div className="absolute top-6 left-0 w-full h-0.5 -z-10">
-              {/* First connector (Cart to Checkout) */}
-              <div
-                className={`absolute left-0 right-1/2 h-full ${
-                  currentStep === "checkout" || currentStep === "confirmed"
-                    ? "bg-primary"
-                    : "bg-muted"
-                }`}
-              />
-
-              {/* Second connector (Checkout to Confirmed) */}
-              <div
-                className={`absolute left-1/2 right-0 h-full ${
-                  currentStep === "confirmed" ? "bg-primary" : "bg-muted"
-                }`}
-              />
+                return (
+                  <div
+                    key={i}
+                    className={`flex-1 h-full ${
+                      isFilled ? "bg-slate-900" : "bg-gray-300"
+                    }`}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
@@ -393,7 +395,7 @@ export default function CheckoutPage() {
                       <Button
                         type="submit"
                         name="save-address"
-                        className="bg-slate-900 hover:bg-gray-700"
+                        className="bg-slate-900 hover:bg-gray-700 text-white"
                       >
                         Save Address
                       </Button>
@@ -490,7 +492,11 @@ export default function CheckoutPage() {
                 )}
                 <div className="flex justify-between">
                   <span>Subtotal (After Discount)</span>
-                  <span>{hasMounted ? `₹${subtotalAfterDiscount.toFixed(2)}` : "..."}</span>
+                  <span>
+                    {hasMounted
+                      ? `₹${subtotalAfterDiscount.toFixed(2)}`
+                      : "..."}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping</span>
@@ -507,11 +513,11 @@ export default function CheckoutPage() {
             </CardContent>
             <CardFooter>
               <Button
-                className="bg-slate-900 hover:bg-gray-700 w-full"
+                className="bg-slate-900 hover:bg-gray-700 w-full text-white"
                 size="lg"
                 onClick={handleCompleteCheckout}
                 name="complete checkout"
-                disabled={!hasMounted || !cartItems || cartItems.length === 0} // Disable if not mounted or cart is empty
+                disabled={!hasMounted || !cartItems || cartItems.length === 0}
               >
                 Complete Checkout
               </Button>

@@ -280,8 +280,8 @@ export default function ProductDetailPage({ id }) {
                         }
                         className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                           cartData.size === size
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                            ? "bg-slate-900 text-white hover:bg-gray-700"
+                            : "bg-gray-200 text-black hover:bg-gray-300"
                         }`}
                       >
                         {size}
@@ -305,8 +305,8 @@ export default function ProductDetailPage({ id }) {
                         }
                         className={`p-2 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                           cartData.color === color
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                            ? "bg-slate-900 text-white hover:bg-gray-700"
+                            : "bg-gray-200 text-black hover:bg-gray-300"
                         }`}
                       >
                         {color}
@@ -339,9 +339,7 @@ export default function ProductDetailPage({ id }) {
                 </div>
                 {extraStates.added ? (
                   <Link href="/checkout" passHref legacyBehavior>
-                    <Button
-                      className="flex-1 bg-emerald-500 hover:bg-emerald-700 text-white"
-                    >
+                    <Button className="flex-1 bg-emerald-500 hover:bg-emerald-700 text-white">
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       Go to checkout
                     </Button>
