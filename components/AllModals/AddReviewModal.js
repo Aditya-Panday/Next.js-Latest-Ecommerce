@@ -63,7 +63,7 @@ const AddReviewModal = ({ isModalOpen, setIsModalOpen, productId, productName })
     return (
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
-                <Button>Add Review</Button>
+                <Button className="bg-slate-900 hover:bg-gray-700">Add Review</Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>

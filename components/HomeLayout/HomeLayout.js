@@ -7,16 +7,25 @@ import Image from "next/image";
 import Footer from "./Footer";
 import CartSidebar from "./CartSidebar";
 import MenuSidebar from "./MenuSidebar";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { selectCartItems } from "@/lib/features/cartData/cartSlice";
+import { selectMounted, setMounted } from "@/lib/features/mounted/mountedSlice";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
+import { Button } from "../ui/button";
 
 const HomeLayout = ({ children }) => {
+  const dispatch = useDispatch();
   const pathname = usePathname(); // Get current route
   const [state, setState] = useState({
     isMenuOpen: false,
     isCartOpen: false,
   });
   const cartItems = useSelector(selectCartItems);
+  const hasMounted = useSelector(selectMounted);
+
+  useEffect(() => {
+    dispatch(setMounted(true));
+  }, [dispatch]);
 
   useEffect(() => {
     if (state.isCartOpen || state.isMenuOpen) {
@@ -58,6 +67,8 @@ const HomeLayout = ({ children }) => {
                   alt="logo"
                   width={180}
                   height={100}
+                  priority
+                  style={{ width: "auto", height: "auto" }} // ensures correct aspect ratio
                 />
               </h1>
             </div>
@@ -92,7 +103,7 @@ const HomeLayout = ({ children }) => {
                 onClick={() => toggleState("isCartOpen", true)}
               >
                 <ShoppingCart className="h-5 w-5 text-black hover:text-red-500" />
-                {cartItems.length > 0 && (
+                {hasMounted && cartItems.length > 0 && (
                   <span
                     className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center "
                     style={{ minWidth: 20, minHeight: 20 }}
@@ -101,9 +112,16 @@ const HomeLayout = ({ children }) => {
                   </span>
                 )}
               </button>
-              <button className="p-2">
-                <User className="h-5 w-5 text-black hover:text-red-500" />
-              </button>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="p-2">
+                    <User className="h-5 w-5 text-black hover:text-red-500" />
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton afterSwitchSessionUrl="/" />
+              </SignedIn>
             </div>
           </div>
         </div>
