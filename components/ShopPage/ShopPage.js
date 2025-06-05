@@ -9,20 +9,24 @@ const ShopPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [filters, setFilters] = useState({
+  const initialFiltersState = {
     category: [],
     brand: [],
     subcategory: [],
     priceBy: "",
     search: "",
     searchTerm: "",
-  });
-  const [appliedFilters, setAppliedFilters] = useState({
+  };
+
+  const initialAppliedFiltersState = {
     category: [],
     brand: [],
     subcategory: [],
     priceBy: "",
-  });
+  };
+
+  const [filters, setFilters] = useState(initialFiltersState);
+  const [appliedFilters, setAppliedFilters] = useState(initialAppliedFiltersState);
   const [refetchKey, setRefetchKey] = useState(0);
 
   useEffect(() => {
@@ -76,6 +80,13 @@ const ShopPage = () => {
     setRefetchKey((prev) => prev + 1);
   };
 
+  const handleResetFilters = () => {
+    setFilters(initialFiltersState);
+    setAppliedFilters(initialAppliedFiltersState);
+    router.push("?"); // Clear URL query parameters
+    setRefetchKey((prev) => prev + 1); // Trigger data refetch
+  };
+
   // Fetch products based on filters
   // ✅ Use filters for actual API call
   const { data: productCollection, isLoading: isProdLoading } =
@@ -110,6 +121,7 @@ const ShopPage = () => {
       setFilters={setFilters}
       handleCheckboxChange={handleCheckboxChange}
       applyFilters={applyFilters}
+      handleResetFilters={handleResetFilters} // Pass the reset function
     />
   );
 };
