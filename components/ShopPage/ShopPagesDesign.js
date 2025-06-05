@@ -17,6 +17,7 @@ export default function CategoryPage({
   setFilters,
   handleCheckboxChange,
   applyFilters,
+  handleResetFilters, // <-- Destructure the new prop
 }) {
   // State for filters
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -63,7 +64,12 @@ export default function CategoryPage({
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Filters</h2>
-                <Button variant="ghost" size="sm" className="text-sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-sm"
+                  onClick={handleResetFilters} // <-- Attach to desktop reset button
+                >
                   Reset All
                 </Button>
               </div>
@@ -247,10 +253,23 @@ export default function CategoryPage({
               </div>
 
               <div className="flex gap-2 mt-6">
-                <Button variant="outline" className="flex-1">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    handleResetFilters();
+                    setIsMobileFilterOpen(false); // Close sidebar
+                  }}
+                >
                   Reset
                 </Button>
-                <Button className="flex-1 md:hidden" onClick={applyFilters}>
+                <Button
+                  className="flex-1 md:hidden bg-slate-900 hover:bg-gray-700"
+                  onClick={() => {
+                    applyFilters();
+                    setIsMobileFilterOpen(false); // Close sidebar
+                  }}
+                >
                   Apply Filters
                 </Button>
               </div>
@@ -277,7 +296,7 @@ export default function CategoryPage({
                 <option value="price_asc">Price: Low to High</option>
                 <option value="price_desc">Price: High to Low</option>
               </select>
-              <Button className="" size="sm" onClick={applyFilters}>
+              <Button className="bg-slate-900 hover:bg-gray-700" size="sm" onClick={applyFilters}>
                 Apply Filters
               </Button>
             </div>
